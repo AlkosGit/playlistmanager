@@ -20,3 +20,7 @@ class Playlist:
             playlist.append(value)
         return playlist
 
+    def selectPlaylist(self, value):
+        self.address = self.cur.execute('select address from url where name=?', value)
+        for addr in self.address:
+            return '{}'.format(addr[0])
