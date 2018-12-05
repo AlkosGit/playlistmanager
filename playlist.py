@@ -15,7 +15,7 @@ class Playlist:
 
     def loadPlaylist(self):
         playlist = []
-        values = self.cur.execute('select * from url')
+        values = self.cur.execute('select name from url')
         for value in values:
             playlist.append(value)
         return playlist
