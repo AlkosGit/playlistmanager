@@ -1,4 +1,4 @@
-# file: main.py
+# file: playlist.py
 from dblib import Db
 
 class Playlist:
@@ -12,3 +12,11 @@ class Playlist:
     def savePlaylist(self):
         self.cur.execute('insert into url (name, address) values (?,?)', (self.name, self.address))
         self.conn.commit()
+
+    def loadPlaylist(self):
+        playlist = []
+        values = self.cur.execute('select * from url')
+        for value in values:
+            playlist.append(value)
+        return playlist
+
