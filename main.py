@@ -33,7 +33,10 @@ class Window:
         self.omenu.config(width=15)
         self.omenu.grid(column=1, row=0, sticky='e', pady=10)
         self.otext = Text(self.frame, width=40, height=10)
+        self.otext.delete(1.0, END)
         self.otext.grid(column=0, row=1, columnspan=2)
+        self.bclear = Button(self.frame, text='Clear', command=self.player)
+        self.bclear.grid(column=0, row=2, sticky='w', pady=10)
         self.bplay = Button(self.frame, text='Play', command=self.play)
         self.bplay.grid(column=1, row=2, sticky='e', pady=10)
 
@@ -47,7 +50,6 @@ class Window:
         output = self.process.stdout.readline()
         self.otext.insert(END, output)
         self.root.after(100, self.listOutput)
-
 
     def new(self):
         self.switchFrame()
@@ -64,10 +66,10 @@ class Window:
         self.bsave = Button(self.frame, text='Save', command=self.save)
         self.bsave.grid(column=1, row=2, sticky='e')
 
-
     def save(self):
         playlist = Playlist(name=self.ename.get(), address=self.eurl.get())
         playlist.savePlaylist()
+        self.player()
 
     def delete(self):
         self.playlist.deletePlaylist(self.var.get())
