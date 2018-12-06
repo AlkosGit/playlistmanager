@@ -7,7 +7,7 @@ class Window:
     def __init__(self):
         self.playlist = Playlist()
         self.root = Tk()
-        self.root.geometry('300x250')
+        self.root.geometry('520x250')
         self.frame  = Frame(self.root)
         self.menubar = Menu(self.root)
         self.filemenu = Menu(self.menubar, tearoff=0)
@@ -21,7 +21,7 @@ class Window:
     def switchFrame(self):
         self.frame.destroy()
         self.frame = Frame(self.root)
-        self.frame.pack()
+        self.frame.pack(fill=BOTH, expand=True)
 
     def player(self):
         self.switchFrame()
@@ -31,14 +31,14 @@ class Window:
         self.label.grid(column=0, row=0)
         self.omenu = OptionMenu(self.frame, self.var, *self.values)
         self.omenu.config(width=15)
-        self.omenu.grid(column=1, row=0, sticky='e', pady=10)
-        self.otext = Text(self.frame, width=40, height=10)
+        self.omenu.grid(column=1, row=0, sticky='w', pady=10)
+        self.otext = Text(self.frame, width=70, height=10)
         self.otext.delete(1.0, END)
-        self.otext.grid(column=0, row=1, columnspan=2)
+        self.otext.grid(column=0, row=1, columnspan=2, padx=10)
         self.bclear = Button(self.frame, text='Clear', command=self.player)
-        self.bclear.grid(column=0, row=2, sticky='w', pady=10)
+        self.bclear.grid(column=0, row=2, sticky='w', pady=10, padx=10)
         self.bplay = Button(self.frame, text='Play', command=self.play)
-        self.bplay.grid(column=1, row=2, sticky='e', pady=10)
+        self.bplay.grid(column=1, row=2, sticky='e', pady=10, padx=10)
 
     def play(self):
         value = (self.var.get())
