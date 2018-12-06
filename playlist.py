@@ -15,12 +15,18 @@ class Playlist:
 
     def loadPlaylist(self):
         playlist = []
-        values = self.cur.execute('select name from url')
-        for value in values:
-            playlist.append(value)
+        values = self.cur.execute('select id, name from url')
+        for pid, value in values:
+            playlist.append(str(pid) + ' ' + value) #  return pid (db.id) as pk
         return playlist
 
     def selectPlaylist(self, value):
-        self.address = self.cur.execute('select address from url where name=?', value)
+        playlist = value.split()
+        self.address = self.cur.execute('select address from url where id=' + playlist[0]) #  select on pk
         for addr in self.address:
             return '{}'.format(addr[0])
+
+    def deletePlaylist(self, value):
+        playlist = value.split()
+        self.cur.execute('delete from url where id=' + playlist[0]) #  delete on pk
+        self.conn.commit()

@@ -23,13 +23,13 @@ class Window:
         self.omenu.grid(column=1, row=0)
         self.bnew = Button(self.frame, text='New', command=self.new)
         self.bnew.grid(column=0, row=1)
-        self.bdel = Button(self.frame, text='Delete')
+        self.bdel = Button(self.frame, text='Delete', command=self.delete)
         self.bdel.grid(column=1, row=1)
 
     def play(self, value):
         self.url = self.playlist.selectPlaylist(value)
         self.cmd = '/usr/bin/mpv --save-position-on-quit'
-        subprocess.call(['/usr/bin/mpv', '--save-position-on-quit', self.url])   
+        #subprocess.call(['/usr/bin/mpv', '--save-position-on-quit', self.url])   
 
     def new(self):
         self.frame.destroy()
@@ -49,6 +49,11 @@ class Window:
     def save(self):
         playlist = Playlist(name=self.ename.get(), address=self.eurl.get())
         playlist.savePlaylist()
+
+    def delete(self):
+        self.playlist.deletePlaylist(self.var.get())
+        
+
 
 
 
