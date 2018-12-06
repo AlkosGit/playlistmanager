@@ -7,7 +7,7 @@ class Window:
     def __init__(self):
         self.playlist = Playlist()
         self.root = Tk()
-        self.root.geometry('200x200')
+        self.root.geometry('300x250')
         self.frame  = Frame(self.root)
         self.menubar = Menu(self.root)
         self.filemenu = Menu(self.menubar, tearoff=0)
@@ -30,7 +30,12 @@ class Window:
         self.label = Label(self.frame, text='Select a video:')
         self.label.grid(column=0, row=0)
         self.omenu = OptionMenu(self.frame, self.var, *self.values, command=self.play)
-        self.omenu.grid(column=1, row=0)
+        self.omenu.config(width=15)
+        self.omenu.grid(column=1, row=0, sticky='e', pady=10)
+        self.otext = Text(self.frame, width=40, height=10)
+        self.otext.grid(column=0, row=1, columnspan=2)
+        self.bplay = Button(self.frame, text='Play')
+        self.bplay.grid(column=1, row=2, sticky='e', pady=10)
 
     def play(self, value):
         self.url = self.playlist.selectPlaylist(value)
@@ -47,8 +52,11 @@ class Window:
         self.lurl.grid(column=0, row=1)
         self.eurl = Entry(self.frame)
         self.eurl.grid(column=1, row=1)
+        self.bcancel = Button(self.frame, text='Cancel', command=self.player)
+        self.bcancel.grid(column=1, row=2, sticky='w')
         self.bsave = Button(self.frame, text='Save', command=self.save)
-        self.bsave.grid(column=1, row=2)
+        self.bsave.grid(column=1, row=2, sticky='e')
+
 
     def save(self):
         playlist = Playlist(name=self.ename.get(), address=self.eurl.get())
