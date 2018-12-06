@@ -9,22 +9,28 @@ class Window:
         self.root = Tk()
         self.root.geometry('200x200')
         self.frame  = Frame(self.root)
-        #  insert menu here
-    
-    def player(self):
+        self.menubar = Menu(self.root)
+        self.filemenu = Menu(self.menubar, tearoff=0)
+        self.filemenu.add_command(label='New', command=self.new)
+        self.filemenu.add_command(label='Delete')
+        self.filemenu.add_separator()
+        self.filemenu.add_command(label='Exit', command=self.root.destroy)
+        self.menubar.add_cascade(label='File', menu=self.filemenu)
+        self.root.config(menu=self.menubar)
+
+    def switchFrame(self):
         self.frame.destroy()
         self.frame = Frame(self.root)
         self.frame.pack()
+
+    def player(self):
+        self.switchFrame()
         self.var = StringVar()
         self.values = self.playlist.loadPlaylist()
         self.label = Label(self.frame, text='Select a video:')
         self.label.grid(column=0, row=0)
         self.omenu = OptionMenu(self.frame, self.var, *self.values, command=self.play)
         self.omenu.grid(column=1, row=0)
-        self.bnew = Button(self.frame, text='New', command=self.new)
-        self.bnew.grid(column=0, row=1)
-        self.bdel = Button(self.frame, text='Delete', command=self.delete)
-        self.bdel.grid(column=1, row=1)
 
     def play(self, value):
         self.url = self.playlist.selectPlaylist(value)
@@ -32,9 +38,7 @@ class Window:
         #subprocess.call(['/usr/bin/mpv', '--save-position-on-quit', self.url])   
 
     def new(self):
-        self.frame.destroy()
-        self.frame = Frame(self.root)
-        self.frame.pack()
+        self.switchFrame()
         self.lname = Label(self.frame, text='Name')
         self.lname.grid(column=0, row=0)
         self.ename = Entry(self.frame)
