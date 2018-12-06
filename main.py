@@ -29,18 +29,25 @@ class Window:
         self.values = self.playlist.loadPlaylist()
         self.label = Label(self.frame, text='Select a video:')
         self.label.grid(column=0, row=0)
-        self.omenu = OptionMenu(self.frame, self.var, *self.values, command=self.play)
+        self.omenu = OptionMenu(self.frame, self.var, *self.values)
         self.omenu.config(width=15)
         self.omenu.grid(column=1, row=0, sticky='e', pady=10)
         self.otext = Text(self.frame, width=40, height=10)
         self.otext.grid(column=0, row=1, columnspan=2)
-        self.bplay = Button(self.frame, text='Play')
+        self.bplay = Button(self.frame, text='Play', command=self.play)
         self.bplay.grid(column=1, row=2, sticky='e', pady=10)
 
-    def play(self, value):
+    def play(self):
+        value = (self.var.get())
         self.url = self.playlist.selectPlaylist(value)
-        self.cmd = '/usr/bin/mpv --save-position-on-quit'
-        #subprocess.call(['/usr/bin/mpv', '--save-position-on-quit', self.url])   
+        self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', self.url], stdout=subprocess.PIPE)
+        self.listOutput()
+        
+    def listOutput(self):
+        output = self.process.stdout.readline()
+        self.otext.insert(END, output)
+        self.root.after(100, self.listOutput)
+
 
     def new(self):
         self.switchFrame()
