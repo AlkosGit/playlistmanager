@@ -2,15 +2,16 @@
 from dblib import Db
 
 class Playlist:
-    def __init__(self, name=None, address=None):
+    def __init__(self, name=None, address=None, description=None):
         db = Db()
         self.conn = db.connection
         self.cur = db.cursor
         self.name = name
         self.address = address
+        self.description = description
 
     def savePlaylist(self):
-        self.cur.execute('insert into url (name, address) values (?,?)', (self.name, self.address))
+        self.cur.execute('insert into url (name, address, description) values (?,?,?)', (self.name, self.address, self.description))
         self.conn.commit()
 
     def loadPlaylist(self):
@@ -19,6 +20,12 @@ class Playlist:
         for pid, value in values:
             playlist.append(str(pid) + ' ' + value) #  return pid (db.id) as pk
         return playlist
+
+    def loadDescription(self, value):
+        playlist = value.split()
+        description = self.cur.execute('select description from url where id=' + playlist[0])
+        for desc in description:
+            return '{}'.format(desc[0])
 
     def selectPlaylist(self, value):
         playlist = value.split()

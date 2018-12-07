@@ -29,10 +29,10 @@ class Window:
         self.values = self.playlist.loadPlaylist()
         if not self.values:
             self.values = ['---',]
-        self.label = Label(self.frame, text='Select a video:')
+        self.label = Label(self.frame, text='Select a playlist:')
         self.label.grid(column=0, row=0)
-        self.omenu = OptionMenu(self.frame, self.var, *self.values)
-        self.omenu.config(width=15)
+        self.omenu = OptionMenu(self.frame, self.var, *self.values, command=self.insertDescription)
+        self.omenu.config(width=30)
         self.omenu.grid(column=1, row=0, sticky='w', pady=10)
         self.otext = Text(self.frame, width=70, height=10)
         self.otext.delete(1.0, END)
@@ -41,6 +41,10 @@ class Window:
         self.bclear.grid(column=0, row=2, sticky='w', pady=10, padx=10)
         self.bplay = Button(self.frame, text='Play', command=self.play)
         self.bplay.grid(column=1, row=2, sticky='e', pady=10, padx=10)
+
+    def insertDescription(self, value):
+        description = self.playlist.loadDescription(value)
+        self.otext.insert(END, description)
 
     def play(self):
         value = (self.var.get())
@@ -56,20 +60,24 @@ class Window:
     def new(self):
         self.switchFrame()
         self.lname = Label(self.frame, text='Name')
-        self.lname.grid(column=0, row=0)
+        self.lname.grid(column=0, row=0, padx=10, pady=5, sticky='w')
         self.ename = Entry(self.frame)
-        self.ename.grid(column=1, row=0)
+        self.ename.grid(column=1, row=0, sticky='w')
         self.lurl = Label(self.frame, text='Url')
-        self.lurl.grid(column=0, row=1)
+        self.lurl.grid(column=0, row=1, padx=10, sticky='w')
         self.eurl = Entry(self.frame)
-        self.eurl.grid(column=1, row=1)
+        self.eurl.grid(column=1, row=1, sticky='w')
+        self.ldesc = Label(self.frame, text='Description')
+        self.ldesc.grid(column=0, row=2, sticky='n', padx=10, pady=5)
+        self.tdesc = Text(self.frame, width=55, height=10)
+        self.tdesc.grid(column=1, row=2, pady=5)
         self.bcancel = Button(self.frame, text='Cancel', command=self.player)
-        self.bcancel.grid(column=1, row=2, sticky='w')
+        self.bcancel.grid(column=1, row=3, sticky='w', pady=5)
         self.bsave = Button(self.frame, text='Save', command=self.save)
-        self.bsave.grid(column=1, row=2, sticky='e')
+        self.bsave.grid(column=1, row=3, sticky='e', pady=5)
 
     def save(self):
-        playlist = Playlist(name=self.ename.get(), address=self.eurl.get())
+        playlist = Playlist(name=self.ename.get(), address=self.eurl.get(), description=self.tdesc.get(1.0, END))
         playlist.savePlaylist()
         self.player()
 
@@ -78,23 +86,19 @@ class Window:
         self.var = StringVar()
         self.values = self.playlist.loadPlaylist()
         self.lname = Label(self.frame, text='Name')
-        self.lname.grid(column=0, row=0)
+        self.lname.grid(column=0, row=0, padx=10, pady=10)
         self.omenu = OptionMenu(self.frame, self.var, *self.values)
+        self.omenu.config(width='30')
         self.omenu.grid(column=1, row=0)
         self.bcancel = Button(self.frame, text='Cancel', command=self.player)
-        self.bcancel.grid(column=0, row=1)
+        self.bcancel.grid(column=1, row=1, sticky='w')
         self.bdelete = Button(self.frame, text='Delete', command=self.deleteRecord)
-        self.bdelete.grid(column=1, row=1)
+        self.bdelete.grid(column=1, row=1, sticky='e')
         
-
     def deleteRecord(self):
         self.playlist.deletePlaylist(self.var.get())
         self.player()
         
-
-
-
-
 if __name__ == '__main__':
     win = Window()
     win.player()
