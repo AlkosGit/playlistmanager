@@ -12,7 +12,7 @@ class Window:
         self.menubar = Menu(self.root)
         self.filemenu = Menu(self.menubar, tearoff=0)
         self.filemenu.add_command(label='New', command=self.new)
-        self.filemenu.add_command(label='Delete')
+        self.filemenu.add_command(label='Delete', command=self.delete)
         self.filemenu.add_separator()
         self.filemenu.add_command(label='Exit', command=self.root.destroy)
         self.menubar.add_cascade(label='File', menu=self.filemenu)
@@ -27,6 +27,8 @@ class Window:
         self.switchFrame()
         self.var = StringVar()
         self.values = self.playlist.loadPlaylist()
+        if not self.values:
+            self.values = ['---',]
         self.label = Label(self.frame, text='Select a video:')
         self.label.grid(column=0, row=0)
         self.omenu = OptionMenu(self.frame, self.var, *self.values)
@@ -72,7 +74,22 @@ class Window:
         self.player()
 
     def delete(self):
+        self.switchFrame()
+        self.var = StringVar()
+        self.values = self.playlist.loadPlaylist()
+        self.lname = Label(self.frame, text='Name')
+        self.lname.grid(column=0, row=0)
+        self.omenu = OptionMenu(self.frame, self.var, *self.values)
+        self.omenu.grid(column=1, row=0)
+        self.bcancel = Button(self.frame, text='Cancel', command=self.player)
+        self.bcancel.grid(column=0, row=1)
+        self.bdelete = Button(self.frame, text='Delete', command=self.deleteRecord)
+        self.bdelete.grid(column=1, row=1)
+        
+
+    def deleteRecord(self):
         self.playlist.deletePlaylist(self.var.get())
+        self.player()
         
 
 
