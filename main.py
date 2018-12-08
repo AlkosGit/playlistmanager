@@ -1,4 +1,4 @@
-# file: main.py
+# file: playlistmanager/main.py
 from playlist import Playlist
 from tkinter import *
 import subprocess
@@ -54,7 +54,7 @@ class Window:
         self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', self.url], stdout=subprocess.PIPE)
         self.listOutput()
         
-    def listOutput(self):
+    def listOutput(self): #  print output of cmd to textfield
         output = self.process.stdout.readline()
         self.otext.insert(END, output)
         self.root.after(100, self.listOutput)
