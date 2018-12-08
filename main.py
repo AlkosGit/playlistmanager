@@ -8,6 +8,7 @@ class Window:
         self.playlist = Playlist()
         self.root = Tk()
         self.root.geometry('520x250')
+        self.root.title('Playlist Manager')
         self.frame  = Frame(self.root)
         self.menubar = Menu(self.root)
         self.filemenu = Menu(self.menubar, tearoff=0)
@@ -44,6 +45,7 @@ class Window:
 
     def insertDescription(self, value):
         description = self.playlist.loadDescription(value)
+        self.otext.delete(1.0, END)
         self.otext.insert(END, description)
 
     def play(self):
