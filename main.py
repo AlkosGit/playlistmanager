@@ -2,6 +2,7 @@
 from playlist import Playlist
 from tkinter import *
 import subprocess
+import threading, queue
 
 class Window:
     def __init__(self):
@@ -62,16 +63,38 @@ class Window:
         self.otext.delete(1.0, END)
         self.otext.insert(END, description)
 
+    def runloop(self, thread_queue):
+        self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', self.url], stdout=subprocess.PIPE)
+        #  output is a continuous stream, so we need to loop.
+        while True:
+            output = self.process.stdout.readline()
+            if not output:
+                break
+            else:
+                #  store output in thread queue
+                thread_queue.put(output)
+
     def play(self):
         value = (self.var.get())
         self.url = self.playlist.selectPlaylist(value)
-        self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', self.url], stdout=subprocess.PIPE)
-        self.listOutput()
-        
-    def listOutput(self): #  print output of cmd to textfield
-        output = self.process.stdout.readline()
-        self.otext.insert(END, output)
-        self.root.after(100, self.listOutput)
+        #  create thread queue to monitor updates from thread.
+        self.thread_queue = queue.Queue()
+        #  create thread and pass thread queue
+        self.thread = threading.Thread(target=self.runloop, args=(self.thread_queue,))
+        self.thread.start()
+        #  call listener method every 100 msec.
+        self.root.after(100, self.listen_for_result)
+
+    def listen_for_result(self):
+        try:
+            #  capturing an output stream, so we need a loop.
+            while True:
+                #  retrieve the output from thread queue and insert into text widget.
+                self.res = self.thread_queue.get(0)
+                self.otext.insert(END, self.res)
+        except queue.Empty:
+            #  no updated output from stream, so keep looping.
+            self.root.after(100, self.listen_for_result)
 
     def new(self):
         self.switchFrame()
