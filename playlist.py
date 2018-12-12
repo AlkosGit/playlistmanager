@@ -12,9 +12,12 @@ class Playlist:
         self.cur = db.cursor
 
     def savePlaylist(self):
-        print (self.address)
-        #self.cur.execute('insert into url (name, address, description) values (?,?,?)', (self.name, self.address, self.description))
-        #self.conn.commit()
+        #  Youtube playlist url's need to be truncated for mpv.
+        if 'youtube.com' and 'list' in self.address:
+            url = self.address.rsplit('&')
+            self.address = 'https://www.youtube.com/watch?{}'.format(url[1])
+        self.cur.execute('insert into url (name, address, description) values (?,?,?)', (self.name, self.address, self.description))
+        self.conn.commit()
 
     def loadPlaylist(self):
         playlist = []
