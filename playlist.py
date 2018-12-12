@@ -10,10 +10,6 @@ class Playlist:
         self.conn = db.connection
         self.cur = db.cursor
 
-    def createDB(self):
-        self.cur.execute('create table url (id int(6) PRIMARY KEY, name varchar(64), address varchar(250), description varchar(250))')
-        self.conn.commit()
-
     def savePlaylist(self):
         self.cur.execute('insert into url (name, address, description) values (?,?,?)', (self.name, self.address, self.description))
         self.conn.commit()
