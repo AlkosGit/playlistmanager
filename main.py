@@ -6,7 +6,7 @@ import threading, queue
 
 class Window:
     def __init__(self):
-        self.playlist = Playlist()
+        self.playlist = Playlist() 
         self.root = Tk()
         self.root.geometry('520x250')
         self.root.title('Playlist Manager')
