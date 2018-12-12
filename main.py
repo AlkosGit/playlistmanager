@@ -17,7 +17,6 @@ class Window:
         self.menubar = Menu(self.root)
         self.filemenu = Menu(self.menubar, tearoff=0)
         self.filemenu.add_command(label='New', command=self.new)
-        self.filemenu.add_command(label='Delete', command=self.delete)
         self.filemenu.add_separator()
         self.filemenu.add_command(label='Exit', command=self.root.destroy)
         self.menubar.add_cascade(label='File', menu=self.filemenu)
@@ -53,15 +52,19 @@ class Window:
         self.otext = Text(self.frame, width=70, height=15)
         self.otext.delete(1.0, END)
         self.otext.grid(column=0, row=1, columnspan=2, sticky='nsew', padx=10)
-        self.bclear = Button(self.frame, text='Clear', command=self.player)
-        self.bclear.grid(column=0, row=2, sticky='w', pady=10, padx=10)
+        self.bdelete = Button(self.frame, text='Delete', command=self.delete)
+        self.bdelete.grid(column=0, row=2, sticky='w', pady=10, padx=10)
+        self.bdelete.config(state=DISABLED)
         self.bplay = Button(self.frame, text='Play', command=self.play)
         self.bplay.grid(column=1, row=2, sticky='e', pady=10, padx=10)
+        self.bplay.config(state=DISABLED)
         
     def insertDescription(self, value):
         description = self.playlist.loadDescription(value)
         self.otext.delete(1.0, END)
         self.otext.insert(END, description)
+        self.bplay.config(state=NORMAL)
+        self.bdelete.config(state=NORMAL)
 
     def runloop(self, thread_queue):
         self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', self.url], stdout=subprocess.PIPE)
@@ -121,22 +124,8 @@ class Window:
         playlist.savePlaylist()
         self.player()
 
-    def delete(self):
-        self.switchFrame()
-        self.delframe.pack(anchor='w')
-        self.var = StringVar()
-        self.values = self.playlist.loadPlaylist()
-        self.lname = Label(self.delframe, text='Name')
-        self.lname.grid(column=0, row=0, padx=10, pady=20)
-        self.omenu = OptionMenu(self.delframe, self.var, *self.values)
-        self.omenu.config(width='30')
-        self.omenu.grid(column=1, row=0)
-        self.bcancel = Button(self.delframe, text='Cancel', command=self.player)
-        self.bcancel.grid(column=1, row=1, sticky='w')
-        self.bdelete = Button(self.delframe, text='Delete', command=self.deleteRecord)
-        self.bdelete.grid(column=1, row=1, sticky='e')
         
-    def deleteRecord(self):
+    def delete(self):
         self.playlist.deletePlaylist(self.var.get())
         self.player()
         
