@@ -1,5 +1,6 @@
 # file: playlist.py
 from dblib import Db
+import sqlite3
 
 class Playlist:
     def __init__(self, name=None, address=None, description=None):
@@ -11,12 +12,19 @@ class Playlist:
         self.cur = db.cursor
 
     def savePlaylist(self):
-        self.cur.execute('insert into url (name, address, description) values (?,?,?)', (self.name, self.address, self.description))
-        self.conn.commit()
+        print (self.address)
+        #self.cur.execute('insert into url (name, address, description) values (?,?,?)', (self.name, self.address, self.description))
+        #self.conn.commit()
 
     def loadPlaylist(self):
         playlist = []
         values = self.cur.execute('select id, name from url')
+        #  check for records in database.
+        try:
+            record = values.__next__()
+        except: 
+            playlist.append('Database empty!')
+            
         for pid, value in values:
             playlist.append(str(pid) + ' ' + value) #  return pid (db.id) as pk
         return playlist
@@ -35,5 +43,8 @@ class Playlist:
 
     def deletePlaylist(self, value):
         playlist = value.split()
-        self.cur.execute('delete from url where id=' + playlist[0]) #  delete on pk
+        try:
+            self.cur.execute('delete from url where id=' + playlist[0]) #  delete on pk
+        except (sqlite3.OperationalError, IndexError):
+            pass
         self.conn.commit()
