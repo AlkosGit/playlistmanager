@@ -42,8 +42,6 @@ class Window:
         self.frame.pack(fill=BOTH, expand=True)
         self.var = StringVar()
         self.values = self.playlist.loadPlaylist()
-        if not self.values:
-            self.values = ['---Empty database!---',]
         self.label = Label(self.topframe, text='Select a playlist:')
         self.label.grid(column=0, row=0)
         self.omenu = OptionMenu(self.topframe, self.var, *self.values, command=self.insertDescription)
