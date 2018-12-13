@@ -27,6 +27,7 @@ class Playlist:
             record = values.__next__()
         except: 
             playlist.append('Database empty!')
+            return playlist
             
         for pid, value in values:
             playlist.append(str(pid) + ' ' + value) #  return pid (db.id) as pk
