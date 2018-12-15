@@ -146,6 +146,19 @@ class Window:
         self.bcancel.grid(column=1, row=4, sticky='w', padx=10, pady=5)
         self.bsave = Button(self.newframe, text='Save', command=self.save)
         self.bsave.grid(column=1, row=4, sticky='e', padx=10, pady=5)
+        self.scaninput()
+
+    def scaninput(self):
+        '''Continuously scan "name" and "url" entryfields for input;
+        these fields have to have data before saving to database.'''
+        try:
+            if not self.ename.get() == '' and not self.eurl.get() == '':
+                self.bsave.config(state=NORMAL)
+            else:
+                self.bsave.config(state=DISABLED)
+            self.root.after(100, self.scaninput)
+        except TclError:
+            return
 
     def save(self):
         playlist = Playlist(name=self.ename.get(), address=self.eurl.get(), description=self.tdesc.get(1.0, END), resume=self.chkvar.get())
