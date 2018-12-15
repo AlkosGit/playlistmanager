@@ -22,14 +22,11 @@ class Playlist:
     def loadPlaylist(self):
         playlist = []
         values = self.cur.execute('select id, name from url')
-        #  check for records in database.
-        try:
-            record = values.__next__()
-        except: 
-            playlist.append('Database empty!')
-            
         for pid, value in values:
             playlist.append(str(pid) + ' ' + value) #  return pid (db.id) as pk
+        #  check for empty record.
+        if not playlist:
+            playlist.append('Database empty!')
         return playlist
 
     def loadDescription(self, value):
