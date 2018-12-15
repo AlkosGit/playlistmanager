@@ -38,9 +38,8 @@ class Playlist:
             for desc in description:
                 return '{}'.format(desc[0])
         except sqlite3.OperationalError:
-            return 'Please select a playlist.'
+            return 'Please select a playlist, or add a new playlist with File -> New.'
            
-
     def selectPlaylist(self, value):
         playlist = value.split()
         self.address = self.cur.execute('select address from url where id=' + playlist[0])
@@ -50,9 +49,12 @@ class Playlist:
     def resumePlaylist(self, value):
         #  check if resume playback is enabled.
         playlist = value.split()
-        self.resume = self.cur.execute('select resume from url where id=' + playlist[0])
-        for resume in self.resume:
-            return resume[0]
+        try:
+            self.resume = self.cur.execute('select resume from url where id=' + playlist[0])
+            for resume in self.resume:
+                return resume[0]
+        except:
+            pass
     
     def deletePlaylist(self, value):
         playlist = value.split()

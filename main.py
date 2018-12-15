@@ -8,7 +8,7 @@ class Window:
     def __init__(self):
         self.playlist = Playlist() 
         self.root = Tk()
-        self.root.geometry('520x250')
+        self.root.geometry('650x400')
         self.root.title('Playlist Manager')
         self.frame = Frame(self.root)
         self.topframe = Frame(self.root)
@@ -47,6 +47,10 @@ class Window:
         self.omenu = OptionMenu(self.topframe, self.listvar, *self.values, command=self.insertDescription)
         self.omenu.config(width=30)
         self.omenu.grid(column=1, row=0, sticky='w', pady=10)
+        self.chkvar = IntVar()
+        self.cbres = Checkbutton(self.topframe, text='Resume playback', variable=self.chkvar)
+        self.cbres.grid(column=2, row=0)
+        self.cbres.config(state=DISABLED)
         self.otext = Text(self.frame, width=70, height=15)
         self.otext.delete(1.0, END)
         self.otext.grid(column=0, row=1, columnspan=2, sticky='nsew', padx=10)
@@ -60,12 +64,17 @@ class Window:
         
     def insertDescription(self, value):
         description = self.playlist.loadDescription(value)
+        resume = self.playlist.resumePlaylist(value)
+        self.cbres.config(state=NORMAL)
+        self.chkvar.set(resume)
+        self.cbres.config(state=DISABLED)
         self.otext.config(state=NORMAL)
         self.otext.delete(1.0, END)
         self.otext.insert(END, description)
         self.otext.config(state=DISABLED)
-        self.bplay.config(state=NORMAL)
-        self.bdelete.config(state=NORMAL)
+        if resume != None:
+            self.bplay.config(state=NORMAL)
+            self.bdelete.config(state=NORMAL)
 
     def runloop(self, thread_queue, resume):
         if resume:
