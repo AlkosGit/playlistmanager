@@ -42,8 +42,6 @@ class Window:
         self.frame.pack(fill=BOTH, expand=True)
         self.var = StringVar()
         self.values = self.playlist.loadPlaylist()
-        if not self.values:
-            self.values = ['---',]
         self.label = Label(self.topframe, text='Select a playlist:')
         self.label.grid(column=0, row=0)
         self.omenu = OptionMenu(self.topframe, self.var, *self.values, command=self.insertDescription)
@@ -52,6 +50,7 @@ class Window:
         self.otext = Text(self.frame, width=70, height=15)
         self.otext.delete(1.0, END)
         self.otext.grid(column=0, row=1, columnspan=2, sticky='nsew', padx=10)
+        self.otext.config(state=DISABLED)
         self.bdelete = Button(self.frame, text='Delete', command=self.delete)
         self.bdelete.grid(column=0, row=2, sticky='w', pady=10, padx=10)
         self.bdelete.config(state=DISABLED)
@@ -61,8 +60,10 @@ class Window:
         
     def insertDescription(self, value):
         description = self.playlist.loadDescription(value)
+        self.otext.config(state=NORMAL)
         self.otext.delete(1.0, END)
         self.otext.insert(END, description)
+        self.otext.config(state=DISABLED)
         self.bplay.config(state=NORMAL)
         self.bdelete.config(state=NORMAL)
 
@@ -89,6 +90,7 @@ class Window:
         self.root.after(100, self.listen_for_result)
 
     def listen_for_result(self):
+        self.otext.config(state=NORMAL)
         try:
             #  capturing an output stream, so we need a loop.
             while True:
@@ -98,6 +100,7 @@ class Window:
         except queue.Empty:
             #  no updated output from stream, so keep looping.
             self.root.after(100, self.listen_for_result)
+        self.otext.config(state=DISABLED)
 
     def new(self):
         self.switchFrame()
@@ -123,7 +126,6 @@ class Window:
         playlist = Playlist(name=self.ename.get(), address=self.eurl.get(), description=self.tdesc.get(1.0, END))
         playlist.savePlaylist()
         self.player()
-
         
     def delete(self):
         self.playlist.deletePlaylist(self.var.get())
