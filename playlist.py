@@ -13,12 +13,16 @@ class Playlist:
         self.cur = db.cursor
 
     def savePlaylist(self):
-        #  Youtube playlist url's need to be truncated for mpv.
-        if 'youtube.com' and 'list' in self.address:
-            url = self.address.rsplit('list=')
-            self.address = 'https://www.youtube.com/watch?list={}'.format(url[1])
-        self.cur.execute('insert into url (name, address, description, resume) values (?,?,?,?)', (self.name, self.address, self.description, self.resume))
-        self.conn.commit()
+        #  check for empty value
+        if not self.address:
+            pass
+        else:
+            #  Youtube playlist url's need to be truncated for mpv.
+            if 'youtube.com' and 'list' in self.address:
+                url = self.address.rsplit('list=')
+                self.address = 'https://www.youtube.com/watch?list={}'.format(url[1])
+            self.cur.execute('insert into url (name, address, description, resume) values (?,?,?,?)', (self.name, self.address, self.description, self.resume))
+            self.conn.commit()
 
     def loadPlaylist(self):
         playlist = []
