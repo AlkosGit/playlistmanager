@@ -33,18 +33,18 @@ class Window:
         self.delframe = Frame(self.root)
         Grid.rowconfigure(self.frame, 1, weight=1)
         Grid.columnconfigure(self.frame, 0, weight=1)
-        Grid.rowconfigure(self.newframe, 2, weight=1)
+        Grid.rowconfigure(self.newframe, 3, weight=1)
         Grid.columnconfigure(self.newframe, 1, weight=1)
 
     def player(self):
         self.switchFrame()
         self.topframe.pack()
         self.frame.pack(fill=BOTH, expand=True)
-        self.var = StringVar()
+        self.listvar = StringVar()
         self.values = self.playlist.loadPlaylist()
         self.label = Label(self.topframe, text='Select a playlist:')
         self.label.grid(column=0, row=0)
-        self.omenu = OptionMenu(self.topframe, self.var, *self.values, command=self.insertDescription)
+        self.omenu = OptionMenu(self.topframe, self.listvar, *self.values, command=self.insertDescription)
         self.omenu.config(width=30)
         self.omenu.grid(column=1, row=0, sticky='w', pady=10)
         self.otext = Text(self.frame, width=70, height=15)
@@ -67,8 +67,12 @@ class Window:
         self.bplay.config(state=NORMAL)
         self.bdelete.config(state=NORMAL)
 
-    def runloop(self, thread_queue):
-        self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', self.url], stdout=subprocess.PIPE)
+    def runloop(self, thread_queue, resume):
+        if resume:
+            self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', self.url], stdout=subprocess.PIPE)
+        else:
+            self.process = subprocess.Popen(['/usr/bin/mpv', self.url], stdout=subprocess.PIPE)
+
         #  output is a continuous stream, so we need to loop.
         while True:
             output = self.process.stdout.readline()
@@ -79,12 +83,13 @@ class Window:
                 thread_queue.put(output)
 
     def play(self):
-        value = (self.var.get())
+        value = (self.listvar.get())
         self.url = self.playlist.selectPlaylist(value)
+        resume = self.playlist.resumePlaylist(value)
         #  create thread queue to monitor updates from thread.
         self.thread_queue = queue.Queue()
         #  create thread and pass thread queue
-        self.thread = threading.Thread(target=self.runloop, args=(self.thread_queue,))
+        self.thread = threading.Thread(target=self.runloop, args=(self.thread_queue, resume))
         self.thread.start()
         #  call listener method every 100 msec.
         self.root.after(100, self.listen_for_result)
@@ -109,26 +114,31 @@ class Window:
         self.lname.grid(column=0, row=0, padx=10, pady=5, sticky='w')
         self.ename = Entry(self.newframe)
         self.ename.grid(column=1, row=0, sticky='ew', padx=10)
-        self.lurl = Label(self.newframe, text='Url')
+        self.lurl = Label(self.newframe, text='URL')
         self.lurl.grid(column=0, row=1, padx=10, sticky='w')
         self.eurl = Entry(self.newframe)
         self.eurl.grid(column=1, row=1, sticky='ew', padx=10)
+        self.lres = Label(self.newframe, text='Resume playback')
+        self.lres.grid(column=0, row=2, padx=10, pady=5, sticky='w')
+        self.chkvar = IntVar()
+        self.cbres = Checkbutton(self.newframe, text='', variable=self.chkvar)
+        self.cbres.grid(column=1, row=2, padx=3, sticky='w')
         self.ldesc = Label(self.newframe, text='Description')
-        self.ldesc.grid(column=0, row=2, sticky='n', padx=10, pady=5)
+        self.ldesc.grid(column=0, row=3, sticky='nw', padx=10, pady=5)
         self.tdesc = Text(self.newframe, width=55, height=10)
-        self.tdesc.grid(column=1, row=2, sticky='nsew', padx=10, pady=5)
+        self.tdesc.grid(column=1, row=3, sticky='nsew', padx=10, pady=5)
         self.bcancel = Button(self.newframe, text='Cancel', command=self.player)
-        self.bcancel.grid(column=1, row=3, sticky='w', padx=10, pady=5)
+        self.bcancel.grid(column=1, row=4, sticky='w', padx=10, pady=5)
         self.bsave = Button(self.newframe, text='Save', command=self.save)
-        self.bsave.grid(column=1, row=3, sticky='e', padx=10, pady=5)
+        self.bsave.grid(column=1, row=4, sticky='e', padx=10, pady=5)
 
     def save(self):
-        playlist = Playlist(name=self.ename.get(), address=self.eurl.get(), description=self.tdesc.get(1.0, END))
+        playlist = Playlist(name=self.ename.get(), address=self.eurl.get(), description=self.tdesc.get(1.0, END), resume=self.chkvar.get())
         playlist.savePlaylist()
         self.player()
         
     def delete(self):
-        self.playlist.deletePlaylist(self.var.get())
+        self.playlist.deletePlaylist(self.listvar.get())
         self.player()
         
 if __name__ == '__main__':
