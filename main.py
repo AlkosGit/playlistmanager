@@ -8,7 +8,13 @@ class Window:
     def __init__(self):
         self.playlist = Playlist() 
         self.root = Tk()
-        self.root.geometry('650x400')
+        self.screen_width = self.root.winfo_screenwidth()
+        self.screen_heigth = self.root.winfo_screenheight()
+        self.width = 650
+        self.height = 400
+        x = (self.screen_width / 2) - (self.width /2)
+        y = (self.screen_heigth /2) - (self.height / 2)
+        self.root.geometry('%dx%d+%d+%d' % (self.width, self.height, x, y))
         self.root.title('Playlist Manager')
         self.frame = Frame(self.root)
         self.topframe = Frame(self.root)
