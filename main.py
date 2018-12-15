@@ -41,6 +41,7 @@ class Window:
         Grid.columnconfigure(self.frame, 0, weight=1)
         Grid.rowconfigure(self.newframe, 3, weight=1)
         Grid.columnconfigure(self.newframe, 1, weight=1)
+        Grid.columnconfigure(self.topframe, 2, minsize=150)
 
     def player(self):
         self.switchFrame()
@@ -55,8 +56,9 @@ class Window:
         self.omenu.grid(column=1, row=0, sticky='w', pady=10)
         self.chkvar = IntVar()
         self.cbres = Checkbutton(self.topframe, text='Resume playback', variable=self.chkvar)
-        self.cbres.grid(column=2, row=0)
         self.cbres.config(state=DISABLED)
+        #  Hide 'resume' checkbox until a playlist is selected.
+        self.cbres.grid_forget()
         self.otext = Text(self.frame, width=70, height=15)
         self.otext.delete(1.0, END)
         self.otext.grid(column=0, row=1, columnspan=2, sticky='nsew', padx=10)
@@ -70,17 +72,20 @@ class Window:
         
     def insertDescription(self, value):
         description = self.playlist.loadDescription(value)
+        #  Get resume status.
         resume = self.playlist.resumePlaylist(value)
-        self.cbres.config(state=NORMAL)
-        self.chkvar.set(resume)
-        self.cbres.config(state=DISABLED)
         self.otext.config(state=NORMAL)
         self.otext.delete(1.0, END)
         self.otext.insert(END, description)
         self.otext.config(state=DISABLED)
+        #  Only enable buttons and show 'resume' checkbox when valid playlist is selected.
         if resume != None:
             self.bplay.config(state=NORMAL)
             self.bdelete.config(state=NORMAL)
+            self.cbres.grid(column=2, row=0)
+            self.cbres.config(state=NORMAL)
+            self.chkvar.set(resume)
+            self.cbres.config(state=DISABLED)
 
     def runloop(self, thread_queue, resume):
         if resume:
