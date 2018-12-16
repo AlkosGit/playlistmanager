@@ -1,6 +1,7 @@
 # file: playlistmanager/main.py
 from playlist import Playlist
 from tkinter import *
+from tkinter import ttk
 import subprocess
 import threading, queue
 
@@ -8,6 +9,8 @@ class Window:
     def __init__(self):
         self.playlist = Playlist() 
         self.root = Tk()
+        #  import widget style sheet.
+        self.root.option_readfile('stylesheet.txt')
         self.screen_width = self.root.winfo_screenwidth()
         self.screen_heigth = self.root.winfo_screenheight()
         self.width = 650
@@ -20,8 +23,8 @@ class Window:
         self.topframe = Frame(self.root)
         self.newframe = Frame(self.root)
         self.delframe = Frame(self.root)
-        self.menubar = Menu(self.root)
-        self.filemenu = Menu(self.menubar, tearoff=0)
+        self.menubar = Menu(self.root, activebackground='#555555', activeforeground='#FFFFFF')
+        self.filemenu = Menu(self.menubar, tearoff=0, activebackground='#555555', activeforeground='#FFFFFF')
         self.filemenu.add_command(label='New', command=self.new)
         self.filemenu.add_separator()
         self.filemenu.add_command(label='Exit', command=self.root.destroy)
@@ -45,32 +48,37 @@ class Window:
 
     def player(self):
         self.switchFrame()
-        self.topframe.pack()
+        self.topframe.pack(fill=BOTH)
         self.frame.pack(fill=BOTH, expand=True)
         self.listvar = StringVar()
-        self.values = self.playlist.loadPlaylist()
         self.label = Label(self.topframe, text='Select a playlist:')
-        self.label.grid(column=0, row=0)
-        self.omenu = OptionMenu(self.topframe, self.listvar, *self.values, command=self.insertDescription)
-        self.omenu.config(width=30)
-        self.omenu.grid(column=1, row=0, sticky='w', pady=10)
+        self.label.grid(column=0, row=0, padx=10)
+        self.cbox = ttk.Combobox(self.topframe, textvariable=self.listvar)
+        self.cbox.grid(column=1, row=0, sticky='w', pady=10)
+        self.cbox['values'] = self.playlist.loadPlaylist()
+        self.cbox.bind('<<ComboboxSelected>>', self.insertDescription)
+        self.cbox.config(state='readonly', width=30)
         self.chkvar = IntVar()
-        self.cbres = Checkbutton(self.topframe, text='Resume playback', variable=self.chkvar)
+        self.cbres = Checkbutton(self.topframe, text='Resume playback',\
+                variable=self.chkvar, activebackground='#444444',\
+                highlightbackground='#444444', foreground='#444444')
         self.cbres.config(state=DISABLED)
         #  Hide 'resume' checkbox until a playlist is selected.
         self.cbres.grid_forget()
-        self.otext = Text(self.frame, width=70, height=15)
+        self.otext = Text(self.frame, width=70, height=15, relief='flat')
         self.otext.delete(1.0, END)
         self.otext.grid(column=0, row=1, columnspan=2, sticky='nsew', padx=10)
         self.otext.config(state=DISABLED)
-        self.bdelete = Button(self.frame, text='Delete', command=self.delete)
-        self.bdelete.grid(column=0, row=2, sticky='w', pady=10, padx=10)
+        self.bdelete = Button(self.frame, text='Delete', command=self.delete, activebackground='#333333', activeforeground='white')
+        self.bdelete.grid(column=0, row=2, sticky='w', pady=5, padx=10)
         self.bdelete.config(state=DISABLED)
-        self.bplay = Button(self.frame, text='Play', command=self.play)
-        self.bplay.grid(column=1, row=2, sticky='e', pady=10, padx=10)
+        self.bplay = Button(self.frame, text='Play', command=self.play, activebackground='#333333', activeforeground='white')
+        self.bplay.grid(column=1, row=2, sticky='e', pady=5, padx=10)
         self.bplay.config(state=DISABLED)
         
     def insertDescription(self, value):
+        self.cbox.selection_clear()
+        value = self.cbox.get()
         description = self.playlist.loadDescription(value)
         #  Get resume status.
         resume = self.playlist.resumePlaylist(value)
@@ -130,38 +138,51 @@ class Window:
     def new(self):
         self.switchFrame()
         self.newframe.pack(fill=BOTH, expand=True)
+        for i in range(4):
+            Grid.rowconfigure(self.newframe, i, pad=5)
+        Grid.columnconfigure(self.newframe, 0, minsize=140)
         self.lname = Label(self.newframe, text='Name')
-        self.lname.grid(column=0, row=0, padx=10, pady=5, sticky='w')
-        self.ename = Entry(self.newframe)
-        self.ename.grid(column=1, row=0, sticky='ew', padx=10)
+        self.lname.grid(column=0, row=0, padx=5, sticky='w')
+        self.ename = Entry(self.newframe, highlightcolor='white')
+        self.ename.grid(column=1, row=0, padx=7, sticky='ew')
         self.lurl = Label(self.newframe, text='URL')
-        self.lurl.grid(column=0, row=1, padx=10, sticky='w')
-        self.eurl = Entry(self.newframe)
-        self.eurl.grid(column=1, row=1, sticky='ew', padx=10)
+        self.lurl.grid(column=0, row=1, padx=5, sticky='w')
+        self.eurl = Entry(self.newframe, highlightcolor='white')
+        self.eurl.grid(column=1, row=1, padx=7, sticky='ew')
         self.lres = Label(self.newframe, text='Resume playback')
-        self.lres.grid(column=0, row=2, padx=10, pady=5, sticky='w')
+        self.lres.grid(column=0, row=2, padx=7, sticky='w')
         self.chkvar = IntVar()
-        self.cbres = Checkbutton(self.newframe, text='', variable=self.chkvar)
-        self.cbres.grid(column=1, row=2, padx=3, sticky='w')
+        self.cbres = Checkbutton(self.newframe, variable=self.chkvar, highlightcolor='white', activebackground='#444444', highlightbackground='#444444', foreground='#444444')
+        self.cbres.grid(column=1, row=2, sticky='nw')
         self.ldesc = Label(self.newframe, text='Description')
-        self.ldesc.grid(column=0, row=3, sticky='nw', padx=10, pady=5)
-        self.tdesc = Text(self.newframe, width=55, height=10)
-        self.tdesc.grid(column=1, row=3, sticky='nsew', padx=10, pady=5)
-        self.bcancel = Button(self.newframe, text='Cancel', command=self.player)
-        self.bcancel.grid(column=1, row=4, sticky='w', padx=10, pady=5)
-        self.bsave = Button(self.newframe, text='Save', command=self.save)
-        self.bsave.grid(column=1, row=4, sticky='e', padx=10, pady=5)
+        self.ldesc.grid(column=0, row=3, padx=5, pady=3, sticky='nw')
+        self.tdesc = Text(self.newframe, width=55, height=10, relief='flat', highlightcolor='white')
+        self.tdesc.grid(column=1, row=3, padx=7, sticky='nsew')
+        self.bcancel = Button(self.newframe, text='Cancel', command=self.player, activebackground='#333333', activeforeground='white')
+        self.bcancel.grid(column=1, row=4, padx=7, pady=5, sticky='w')
+        self.bsave = Button(self.newframe, text='Save', command=self.save, activebackground='#333333', activeforeground='white')
+        self.bsave.grid(column=1, row=4, padx=7, pady=5, sticky='e')
+        self.bsave.config(state=DISABLED)
         self.scaninput()
 
     def scaninput(self):
         '''Continuously scan "name" and "url" entryfields for input;
         these fields have to have data before saving to database.'''
+        #  Get the state of 'save' button. Wrap in try statement to suppress stderr when destroying frame.
+        try:
+            state = str(self.bsave['state'])
+        except TclError:
+            return
+        #  Start scanning of input. 
         try:
             if not self.ename.get() == '' and not self.eurl.get() == '':
-                self.bsave.config(state=NORMAL)
+                #  If required fields have input, stop scanning the button.
+                if state == 'disabled':
+                    self.bsave.config(state=NORMAL)
             else:
                 self.bsave.config(state=DISABLED)
             self.root.after(100, self.scaninput)
+        #  Suppress stderr when destroying frame.    
         except TclError:
             return
 
