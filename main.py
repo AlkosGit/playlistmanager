@@ -19,7 +19,7 @@ class Window:
         ###
         self.root.title('Playlist Manager')
         #  Create frames.
-        self.frames = ('self.frame', 'self.topframe', 'self.newframe', 'self.delframe')
+        self.frames = ('self.mainframe', 'self.topframe', 'self.newframe', 'self.delframe')
         for f in self.frames:
             exec('{} = Frame(self.root)'.format(f))
         #  Create filemenu.
@@ -36,78 +36,85 @@ class Window:
         for f in self.frames: 
             exec('{}.destroy()'.format(f))
             exec('{} = Frame(self.root)'.format(f))
-        Grid.rowconfigure(self.frame, 1, weight=1)
-        Grid.columnconfigure(self.frame, 0, weight=1)
+        ###
+        Grid.rowconfigure(self.mainframe, 1, weight=1)
+        Grid.columnconfigure(self.mainframe, 0, weight=1)
         Grid.rowconfigure(self.newframe, 5, weight=1)
         Grid.columnconfigure(self.newframe, 1, weight=1)
         Grid.columnconfigure(self.topframe, 2, minsize=150)
 
     def player(self):
+        '''   This is the main window.  '''
         self.switchFrame()
         self.topframe.pack(fill=BOTH)
-        self.frame.pack(fill=BOTH, expand=True)
-        self.label = Label(self.topframe, text='Select a playlist:')
-        self.label.grid(column=0, row=0, padx=10)
-        self.listvar = StringVar()
-        self.cbox = ttk.Combobox(self.topframe, textvariable=self.listvar)
-        self.cbox.grid(column=1, row=0, sticky='w', pady=10)
-        self.cbox['values'] = self.playlist.loadPlaylist()
-        self.cbox.bind('<<ComboboxSelected>>', self.insertDescription)
-        self.cbox.config(state='readonly', width=30)
-        self.resvar = IntVar()
-        self.cbres = Checkbutton(self.topframe, text='Resume playback',\
-                variable=self.resvar, activebackground='#444444',\
-                highlightbackground='#444444', foreground='#444444')
-        self.shufvar = IntVar()
-        self.cbshuf = Checkbutton(self.topframe, text='Shuffle',\
-                variable=self.shufvar, activebackground='#444444',\
-                highlightbackground='#444444', foreground='#444444')
-        #  Hide 'resume' and 'shuffle' checkbox until a playlist is selected.
-        self.cbres.grid_forget()
-        self.cbshuf.grid_forget()
+        self.mainframe.pack(fill=BOTH, expand=True)
+        self.lplaylist = Label(self.topframe, text='Select a playlist:')
+        self.lplaylist.grid(column=0, row=0, padx=10)
+        self.cboxplayer_var = StringVar()
+        self.cboxplayer = ttk.Combobox(self.topframe, textvariable=self.cboxplayer_var)
+        self.cboxplayer.grid(column=1, row=0, sticky='w', pady=10)
+        #  Populate combobox.
+        self.cboxplayer['values'] = self.playlist.loadPlaylist()
+        self.cboxplayer.bind('<<ComboboxSelected>>', self.initPlayer)
+        #  Set combobox to read-only.
+        self.cboxplayer.config(state='readonly', width=30)
         ###
-        self.otext = Text(self.frame, width=70, height=15, relief='flat')
-        self.otext.delete(1.0, END)
-        self.otext.grid(column=0, row=1, columnspan=2, sticky='nsew', padx=10)
-        self.bdelete = Button(self.frame, text='Delete', command=self.delete, activebackground='#333333', activeforeground='white')
+        self.cbuttonresume_var = IntVar()
+        self.cbuttonresume = Checkbutton(self.topframe, text='Resume playback',\
+                variable=self.cbuttonresume_var, activebackground='#444444',\
+                highlightbackground='#444444', foreground='#444444')
+        self.cbuttonshuffle_var = IntVar()
+        self.cbuttonshuffle = Checkbutton(self.topframe, text='Shuffle',\
+                variable=self.cbuttonshuffle_var, activebackground='#444444',\
+                highlightbackground='#444444', foreground='#444444')
+        #  Hide 'resume' and 'shuffle' checkbuttons until a playlist is selected.
+        self.cbuttonresume.grid_forget()
+        self.cbuttonshuffle.grid_forget()
+        ###
+        self.tmain = Text(self.mainframe, width=70, height=15, relief='flat')
+        self.tmain.delete(1.0, END)
+        self.tmain.grid(column=0, row=1, columnspan=2, sticky='nsew', padx=10)
+        self.bdelete = Button(self.mainframe, text='Delete', command=self.delete, activebackground='#333333', activeforeground='white')
         self.bdelete.grid(column=0, row=2, sticky='w', pady=5, padx=10)
-        self.bplay = Button(self.frame, text='Play', command=self.play, activebackground='#333333', activeforeground='white')
+        self.bplay = Button(self.mainframe, text='Play', command=self.play, activebackground='#333333', activeforeground='white')
         self.bplay.grid(column=1, row=2, sticky='e', pady=5, padx=10)
         #  Disable text widget, checkbuttons and buttons until a playlist is selected.
-        self.cbres.config(state=DISABLED)
-        self.cbshuf.config(state=DISABLED)
-        self.otext.config(state=DISABLED)
-        self.bdelete.config(state=DISABLED)
-        self.bplay.config(state=DISABLED)
+        for widget in (self.cbuttonresume, self.cbuttonshuffle, self.tmain, self.bdelete, self.bplay):
+            widget.config(state=DISABLED)
         
-    def insertDescription(self, value):
+    def initPlayer(self, value):
+        '''   Prepare to play selected playlist: fetch url/file, resume and shuffle options,
+        and enable buttons.   '''
         #  Clear combobox after setting it to read-only to avoid artifacts.
-        self.cbox.selection_clear()
-        value = self.cbox.get()
+        self.cboxplayer.selection_clear()
+        ###
+        value = self.cboxplayer.get()
+        #  Get description.
         description = self.playlist.loadDescription(value)
         #  Get resume and shuffle status.
-        resume = self.playlist.resumePlaylist(value)
-        shuffle = self.playlist.shufflePlaylist(value)
-        self.otext.config(state=NORMAL)
-        self.otext.delete(1.0, END)
-        self.otext.insert(END, description)
-        self.otext.config(state=DISABLED)
+        self.resume = self.playlist.resumePlaylist(value)
+        self.shuffle = self.playlist.shufflePlaylist(value)
+        #  Insert description.
+        self.tmain.config(state=NORMAL)
+        self.tmain.delete(1.0, END)
+        self.tmain.insert(END, description)
+        self.tmain.config(state=DISABLED)
         #  Only enable buttons and show 'resume' and 'shuffle' checkbox when valid playlist is selected.
         #  resume = None when no database record is returned.
-        if resume != None:
-            self.bplay.config(state=NORMAL)
-            self.bdelete.config(state=NORMAL)
-            self.cbres.grid(column=2, row=0)
-            self.cbres.config(state=NORMAL)
-            self.cbshuf.grid(column=3, row=0)
-            self.cbshuf.config(state=NORMAL)
-            #  Toggle checkbutton on or off.
-            self.resvar.set(resume)
-            self.cbres.config(state=DISABLED)
-            self.shufvar.set(shuffle)
-            self.cbshuf.config(state=DISABLED)
+        if self.resume != None:
+            for widget in (self.bplay, self.bdelete, self.cbuttonresume, self.cbuttonshuffle):
+                widget.config(state=NORMAL)
+            self.cbuttonresume.grid(column=2, row=0)
+            self.cbuttonshuffle.grid(column=3, row=0)
+            #  Toggle checkbuttons on or off.
+            self.cbuttonresume_var.set(self.resume)
+            self.cbuttonresume.config(state=DISABLED)
+            self.cbuttonshuffle_var.set(self.shuffle)
+            self.cbuttonshuffle.config(state=DISABLED)
 
     def runloop(self, thread_queue, resume, shuffle):
+        '''   Player runs in own thread. 
+        Store output from player in thread queue.   '''
         #  Check for selected options.
         if resume and shuffle:
             self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', '--shuffle', self.url], stdout=subprocess.PIPE)
@@ -120,46 +127,47 @@ class Window:
                 else:
                     self.process = subprocess.Popen(['/usr/bin/mpv', self.url], stdout=subprocess.PIPE)
 
-        #  output is a continuous stream, so we need to loop.
+        #  Output is a continuous stream, so we need to loop.
         while True:
             output = self.process.stdout.readline()
             if not output:
                 break
             else:
-                #  store output in thread queue
+                #  Store output in thread queue
                 thread_queue.put(output)
 
     def play(self):
-        value = (self.listvar.get())
+        '''   Start player in separate thread.   '''
+        value = (self.cboxplayer_var.get())
+        #  Retrieve url or mediafile from selected playlist.
         self.url = self.playlist.selectPlaylist(value)
-        resume = self.playlist.resumePlaylist(value)
-        shuffle = self.playlist.shufflePlaylist(value)
-        #  create thread queue to monitor updates from thread.
+        #  Create thread queue to monitor output from thread.
         self.thread_queue = queue.Queue()
-        #  create thread and pass thread queue
-        self.thread = threading.Thread(target=self.runloop, args=(self.thread_queue, resume, shuffle))
+        #  Create thread and pass thread queue
+        self.thread = threading.Thread(target=self.runloop, args=(self.thread_queue, self.resume, self.shuffle))
         self.thread.start()
-        #  call listener method every 100 msec.
+        #  Call listener method every 100 msec.
         self.root.after(100, self.listen_for_result)
 
     def listen_for_result(self):
-        self.otext.config(state=NORMAL)
+        '''   Keep listening for updated output from player.   '''
+        self.tmain.config(state=NORMAL)
         try:
-            #  capturing an output stream, so we need a loop.
+            #  Capturing an output stream, so we need to loop.
             while True:
-                #  retrieve the output from thread queue and insert into text widget.
+                #  Retrieve the output from thread queue and insert into text widget.
                 self.res = self.thread_queue.get(0)
-                self.otext.insert(END, self.res)
+                self.tmain.insert(END, self.res)
         except queue.Empty:
-            #  no updated output from stream, so keep looping.
+            #  No updated output from stream, so keep looping.
             self.root.after(100, self.listen_for_result)
-        self.otext.config(state=DISABLED)
+        self.tmain.config(state=DISABLED)
 
     def new(self):
         self.switchFrame()
         self.newframe.pack(fill=BOTH, expand=True, pady=10)
-        self.resvar = IntVar()
-        self.shufvar = IntVar()
+        self.cbuttonresume_var = IntVar()
+        self.cbuttonshuffle_var = IntVar()
         for i in range(7):
             Grid.rowconfigure(self.newframe, i, pad=5)
         Grid.columnconfigure(self.newframe, 0, minsize=140)
@@ -173,16 +181,16 @@ class Window:
         self.eurl.grid(column=1, row=2, padx=7, sticky='ew')
         self.lres = Label(self.newframe, text='Resume playback')
         self.lres.grid(column=0, row=3, padx=5, sticky='w')
-        self.cbres = Checkbutton(self.newframe, variable=self.resvar,\
+        self.cbuttonresume = Checkbutton(self.newframe, variable=self.cbuttonresume_var,\
                 highlightcolor='white', activebackground='#444444',\
                 highlightbackground='#444444', foreground='#444444')
-        self.cbres.grid(column=1, row=3, sticky='nw')
+        self.cbuttonresume.grid(column=1, row=3, sticky='nw')
         self.lshuf = Label(self.newframe, text='Shuffle')
         self.lshuf.grid(column=0, row=4, padx=5, sticky='w')
-        self.cbshuf = Checkbutton(self.newframe, variable=self.shufvar,\
+        self.cbuttonshuffle = Checkbutton(self.newframe, variable=self.cbuttonshuffle_var,\
                 highlightcolor='white', activebackground='#444444',\
                 highlightbackground='#444444', foreground='#444444')
-        self.cbshuf.grid(column=1, row=4, sticky='w')
+        self.cbuttonshuffle.grid(column=1, row=4, sticky='w')
         self.ldesc = Label(self.newframe, text='Description')
         self.ldesc.grid(column=0, row=5, padx=5, pady=3, sticky='nw')
         self.tdesc = Text(self.newframe, width=55, height=10, relief='flat', highlightcolor='white', insertbackground='white')
@@ -217,12 +225,12 @@ class Window:
 
     def save(self):
         playlist = Playlist(name=self.ename.get(), address=self.eurl.get(),\
-                description=self.tdesc.get(1.0, END), resume=self.resvar.get(), shuffle=self.shufvar.get())
+                description=self.tdesc.get(1.0, END), resume=self.cbuttonresume_var.get(), shuffle=self.cbuttonshuffle_var.get())
         playlist.savePlaylist()
         self.player()
         
     def delete(self):
-        self.playlist.deletePlaylist(self.listvar.get())
+        self.playlist.deletePlaylist(self.cboxplayer_var.get())
         self.player()
         
 if __name__ == '__main__':
