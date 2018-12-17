@@ -13,8 +13,8 @@ class Window:
         self.root.option_readfile('stylesheet.txt')
         self.screen_width = self.root.winfo_screenwidth()
         self.screen_heigth = self.root.winfo_screenheight()
-        self.width = 650
-        self.height = 400
+        self.width = 800
+        self.height = 500
         x = (self.screen_width / 2) - (self.width /2)
         y = (self.screen_heigth /2) - (self.height / 2)
         self.root.geometry('%dx%d+%d+%d' % (self.width, self.height, x, y))
