@@ -3,11 +3,12 @@ from dblib import Db
 import sqlite3
 
 class Playlist:
-    def __init__(self, name=None, address=None, description=None, resume=None):
+    def __init__(self, name=None, address=None, description=None, resume=None, shuffle=None):
         self.name = name
         self.address = address
         self.description = description
         self.resume = resume
+        self.shuffle = shuffle
         db = Db()
         self.conn = db.connection
         self.cur = db.cursor
@@ -21,7 +22,8 @@ class Playlist:
             if 'youtube.com' and 'list' in self.address:
                 url = self.address.rsplit('list=')
                 self.address = 'https://www.youtube.com/watch?list={}'.format(url[1])
-            self.cur.execute('insert into url (name, address, description, resume) values (?,?,?,?)', (self.name, self.address, self.description, self.resume))
+            self.cur.execute('insert into url (name, address, description, resume, shuffle) values (?,?,?,?,?)',\
+                    (self.name, self.address, self.description, self.resume, self.shuffle))
             self.conn.commit()
 
     def loadPlaylist(self):
@@ -57,6 +59,16 @@ class Playlist:
             self.resume = self.cur.execute('select resume from url where id=' + playlist[0])
             for resume in self.resume:
                 return resume[0]
+        except:
+            pass
+    
+    def shufflePlaylist(self, value):
+        #  check if shuffle playback is enabled.
+        playlist = value.split()
+        try:
+            self.shuffle = self.cur.execute('select shuffle from url where id=' + playlist[0])
+            for shuffle in self.shuffle:
+                return shuffle[0]
         except:
             pass
     

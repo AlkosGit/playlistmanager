@@ -63,8 +63,14 @@ class Window:
                 variable=self.resvar, activebackground='#444444',\
                 highlightbackground='#444444', foreground='#444444')
         self.cbres.config(state=DISABLED)
-        #  Hide 'resume' checkbox until a playlist is selected.
+        self.shufvar = IntVar()
+        self.cbshuf = Checkbutton(self.topframe, text='Shuffle',\
+                variable=self.shufvar, activebackground='#444444',\
+                highlightbackground='#444444', foreground='#444444')
+        self.cbshuf.config(state=DISABLED)
+        #  Hide 'resume' and 'shuffle' checkbox until a playlist is selected.
         self.cbres.grid_forget()
+        self.cbshuf.grid_forget()
         self.otext = Text(self.frame, width=70, height=15, relief='flat')
         self.otext.delete(1.0, END)
         self.otext.grid(column=0, row=1, columnspan=2, sticky='nsew', padx=10)
@@ -80,24 +86,35 @@ class Window:
         self.cbox.selection_clear()
         value = self.cbox.get()
         description = self.playlist.loadDescription(value)
-        #  Get resume status.
+        #  Get resume and shuffle status.
         resume = self.playlist.resumePlaylist(value)
+        shuffle = self.playlist.shufflePlaylist(value)
         self.otext.config(state=NORMAL)
         self.otext.delete(1.0, END)
         self.otext.insert(END, description)
         self.otext.config(state=DISABLED)
-        #  Only enable buttons and show 'resume' checkbox when valid playlist is selected.
+        #  Only enable buttons and show 'resume' and 'shuffle' checkbox when valid playlist is selected.
+        #  resume = None when no database record is returned.
         if resume != None:
             self.bplay.config(state=NORMAL)
             self.bdelete.config(state=NORMAL)
             self.cbres.grid(column=2, row=0)
             self.cbres.config(state=NORMAL)
+            self.cbshuf.grid(column=3, row=0)
+            self.cbshuf.config(state=NORMAL)
+            #  Toggle checkbutton on or off.
             self.resvar.set(resume)
             self.cbres.config(state=DISABLED)
+            self.shufvar.set(shuffle)
+            self.cbshuf.config(state=DISABLED)
 
-    def runloop(self, thread_queue, resume):
+    def runloop(self, thread_queue, resume, shuffle):
+        if resume and shuffle:
+            self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit --shuffle', self.url], stdout=subprocess.PIPE)
         if resume:
             self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', self.url], stdout=subprocess.PIPE)
+        if shuffle:
+            self.process = subprocess.Popen(['/usr/bin/mpv', '--shuffle', self.url], stdout=subprocess.PIPE)
         else:
             self.process = subprocess.Popen(['/usr/bin/mpv', self.url], stdout=subprocess.PIPE)
 
@@ -114,10 +131,11 @@ class Window:
         value = (self.listvar.get())
         self.url = self.playlist.selectPlaylist(value)
         resume = self.playlist.resumePlaylist(value)
+        shuffle = self.playlist.shufflePlaylist(value)
         #  create thread queue to monitor updates from thread.
         self.thread_queue = queue.Queue()
         #  create thread and pass thread queue
-        self.thread = threading.Thread(target=self.runloop, args=(self.thread_queue, resume))
+        self.thread = threading.Thread(target=self.runloop, args=(self.thread_queue, resume, shuffle))
         self.thread.start()
         #  call listener method every 100 msec.
         self.root.after(100, self.listen_for_result)
@@ -196,7 +214,8 @@ class Window:
             return
 
     def save(self):
-        playlist = Playlist(name=self.ename.get(), address=self.eurl.get(), description=self.tdesc.get(1.0, END), resume=self.resvar.get())
+        playlist = Playlist(name=self.ename.get(), address=self.eurl.get(),\
+                description=self.tdesc.get(1.0, END), resume=self.resvar.get(), shuffle=self.shufvar.get())
         playlist.savePlaylist()
         self.player()
         

@@ -18,5 +18,6 @@ class Db:
                 'name varchar(64),'\
                 'address varchar(250),'\
                 'description varchar(250),'\
-                'resume int)')
+                'resume int,'\
+                'shuffle int)')
         self.connection.commit()
