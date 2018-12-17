@@ -109,14 +109,17 @@ class Window:
             self.cbshuf.config(state=DISABLED)
 
     def runloop(self, thread_queue, resume, shuffle):
+        #  Check for selected options.
         if resume and shuffle:
-            self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit --shuffle', self.url], stdout=subprocess.PIPE)
-        if resume:
-            self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', self.url], stdout=subprocess.PIPE)
-        if shuffle:
-            self.process = subprocess.Popen(['/usr/bin/mpv', '--shuffle', self.url], stdout=subprocess.PIPE)
+            self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', '--shuffle', self.url], stdout=subprocess.PIPE)
         else:
-            self.process = subprocess.Popen(['/usr/bin/mpv', self.url], stdout=subprocess.PIPE)
+            if resume:
+                self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', self.url], stdout=subprocess.PIPE)
+            else:
+                if shuffle:
+                    self.process = subprocess.Popen(['/usr/bin/mpv', '--shuffle', '--loop', self.url], stdout=subprocess.PIPE)
+                else:
+                    self.process = subprocess.Popen(['/usr/bin/mpv', self.url], stdout=subprocess.PIPE)
 
         #  output is a continuous stream, so we need to loop.
         while True:
