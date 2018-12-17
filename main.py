@@ -29,7 +29,7 @@ class Window:
         self.filemenu.add_separator()
         self.filemenu.add_command(label='Exit', command=self.root.destroy)
         self.menubar.add_cascade(label='File', menu=self.filemenu)
-        self.root.config(menu=self.menubar)
+        self.root.config(menu=self.menubar, background='#444444')
 
     def switchFrame(self):
         self.frame.destroy()
@@ -42,7 +42,7 @@ class Window:
         self.delframe = Frame(self.root)
         Grid.rowconfigure(self.frame, 1, weight=1)
         Grid.columnconfigure(self.frame, 0, weight=1)
-        Grid.rowconfigure(self.newframe, 4, weight=1)
+        Grid.rowconfigure(self.newframe, 5, weight=1)
         Grid.columnconfigure(self.newframe, 1, weight=1)
         Grid.columnconfigure(self.topframe, 2, minsize=150)
 
@@ -158,40 +158,40 @@ class Window:
 
     def new(self):
         self.switchFrame()
-        self.newframe.pack(fill=BOTH, expand=True)
+        self.newframe.pack(fill=BOTH, expand=True, pady=10)
         self.resvar = IntVar()
         self.shufvar = IntVar()
-        for i in range(6):
+        for i in range(7):
             Grid.rowconfigure(self.newframe, i, pad=5)
         Grid.columnconfigure(self.newframe, 0, minsize=140)
         self.lname = Label(self.newframe, text='Name')
-        self.lname.grid(column=0, row=0, padx=5, sticky='w')
+        self.lname.grid(column=0, row=1, padx=5, sticky='w')
         self.ename = Entry(self.newframe, highlightcolor='white', insertbackground='white')
-        self.ename.grid(column=1, row=0, padx=7, sticky='ew')
+        self.ename.grid(column=1, row=1, padx=7, sticky='ew')
         self.lurl = Label(self.newframe, text='URL')
-        self.lurl.grid(column=0, row=1, padx=5, sticky='w')
+        self.lurl.grid(column=0, row=2, padx=5, sticky='w')
         self.eurl = Entry(self.newframe, highlightcolor='white', insertbackground='white')
-        self.eurl.grid(column=1, row=1, padx=7, sticky='ew')
+        self.eurl.grid(column=1, row=2, padx=7, sticky='ew')
         self.lres = Label(self.newframe, text='Resume playback')
-        self.lres.grid(column=0, row=2, padx=5, sticky='w')
+        self.lres.grid(column=0, row=3, padx=5, sticky='w')
         self.cbres = Checkbutton(self.newframe, variable=self.resvar,\
                 highlightcolor='white', activebackground='#444444',\
                 highlightbackground='#444444', foreground='#444444')
-        self.cbres.grid(column=1, row=2, sticky='nw')
+        self.cbres.grid(column=1, row=3, sticky='nw')
         self.lshuf = Label(self.newframe, text='Shuffle')
-        self.lshuf.grid(column=0, row=3, padx=5, sticky='w')
+        self.lshuf.grid(column=0, row=4, padx=5, sticky='w')
         self.cbshuf = Checkbutton(self.newframe, variable=self.shufvar,\
                 highlightcolor='white', activebackground='#444444',\
                 highlightbackground='#444444', foreground='#444444')
-        self.cbshuf.grid(column=1, row=3, sticky='w')
+        self.cbshuf.grid(column=1, row=4, sticky='w')
         self.ldesc = Label(self.newframe, text='Description')
-        self.ldesc.grid(column=0, row=4, padx=5, pady=3, sticky='nw')
+        self.ldesc.grid(column=0, row=5, padx=5, pady=3, sticky='nw')
         self.tdesc = Text(self.newframe, width=55, height=10, relief='flat', highlightcolor='white', insertbackground='white')
-        self.tdesc.grid(column=1, row=4, padx=7, sticky='nsew')
+        self.tdesc.grid(column=1, row=5, padx=7, sticky='nsew')
         self.bcancel = Button(self.newframe, text='Cancel', command=self.player, activebackground='#333333', activeforeground='white')
-        self.bcancel.grid(column=1, row=5, padx=7, pady=5, sticky='w')
+        self.bcancel.grid(column=1, row=6, padx=7, pady=5, sticky='w')
         self.bsave = Button(self.newframe, text='Save', command=self.save, activebackground='#333333', activeforeground='white')
-        self.bsave.grid(column=1, row=5, padx=7, pady=5, sticky='e')
+        self.bsave.grid(column=1, row=6, padx=7, pady=5, sticky='e')
         self.bsave.config(state=DISABLED)
         self.scaninput()
 
