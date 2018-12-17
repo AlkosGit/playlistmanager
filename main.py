@@ -9,20 +9,20 @@ class Window:
     def __init__(self):
         self.playlist = Playlist() 
         self.root = Tk()
-        #  import widget style sheet.
+        #  Import widget style sheet.
         self.root.option_readfile('stylesheet.txt')
-        self.screen_width = self.root.winfo_screenwidth()
-        self.screen_heigth = self.root.winfo_screenheight()
-        self.width = 800
-        self.height = 500
-        x = (self.screen_width / 2) - (self.width /2)
-        y = (self.screen_heigth /2) - (self.height / 2)
+        #  Make window appear centered on screen.
+        self.width, self.height = 800, 500
+        x = (self.root.winfo_screenwidth() / 2) - (self.width /2)
+        y = (self.root.winfo_screenheight() /2) - (self.height / 2)
         self.root.geometry('%dx%d+%d+%d' % (self.width, self.height, x, y))
+        ###
         self.root.title('Playlist Manager')
-        self.frame = Frame(self.root)
-        self.topframe = Frame(self.root)
-        self.newframe = Frame(self.root)
-        self.delframe = Frame(self.root)
+        #  Create frames.
+        self.frames = ('self.frame', 'self.topframe', 'self.newframe', 'self.delframe')
+        for f in self.frames:
+            exec('{} = Frame(self.root)'.format(f))
+        #  Create filemenu.
         self.menubar = Menu(self.root, activebackground='#555555', activeforeground='#FFFFFF')
         self.filemenu = Menu(self.menubar, tearoff=0, activebackground='#555555', activeforeground='#FFFFFF')
         self.filemenu.add_command(label='New', command=self.new)
@@ -32,14 +32,10 @@ class Window:
         self.root.config(menu=self.menubar, background='#444444')
 
     def switchFrame(self):
-        self.frame.destroy()
-        self.topframe.destroy()
-        self.newframe.destroy()
-        self.delframe.destroy()
-        self.frame = Frame(self.root)
-        self.topframe = Frame(self.root)
-        self.newframe = Frame(self.root) 
-        self.delframe = Frame(self.root)
+        #  Destroy and recreate frames.
+        for f in self.frames: 
+            exec('{}.destroy()'.format(f))
+            exec('{} = Frame(self.root)'.format(f))
         Grid.rowconfigure(self.frame, 1, weight=1)
         Grid.columnconfigure(self.frame, 0, weight=1)
         Grid.rowconfigure(self.newframe, 5, weight=1)
@@ -50,9 +46,9 @@ class Window:
         self.switchFrame()
         self.topframe.pack(fill=BOTH)
         self.frame.pack(fill=BOTH, expand=True)
-        self.listvar = StringVar()
         self.label = Label(self.topframe, text='Select a playlist:')
         self.label.grid(column=0, row=0, padx=10)
+        self.listvar = StringVar()
         self.cbox = ttk.Combobox(self.topframe, textvariable=self.listvar)
         self.cbox.grid(column=1, row=0, sticky='w', pady=10)
         self.cbox['values'] = self.playlist.loadPlaylist()
@@ -62,27 +58,30 @@ class Window:
         self.cbres = Checkbutton(self.topframe, text='Resume playback',\
                 variable=self.resvar, activebackground='#444444',\
                 highlightbackground='#444444', foreground='#444444')
-        self.cbres.config(state=DISABLED)
         self.shufvar = IntVar()
         self.cbshuf = Checkbutton(self.topframe, text='Shuffle',\
                 variable=self.shufvar, activebackground='#444444',\
                 highlightbackground='#444444', foreground='#444444')
-        self.cbshuf.config(state=DISABLED)
         #  Hide 'resume' and 'shuffle' checkbox until a playlist is selected.
         self.cbres.grid_forget()
         self.cbshuf.grid_forget()
+        ###
         self.otext = Text(self.frame, width=70, height=15, relief='flat')
         self.otext.delete(1.0, END)
         self.otext.grid(column=0, row=1, columnspan=2, sticky='nsew', padx=10)
-        self.otext.config(state=DISABLED)
         self.bdelete = Button(self.frame, text='Delete', command=self.delete, activebackground='#333333', activeforeground='white')
         self.bdelete.grid(column=0, row=2, sticky='w', pady=5, padx=10)
-        self.bdelete.config(state=DISABLED)
         self.bplay = Button(self.frame, text='Play', command=self.play, activebackground='#333333', activeforeground='white')
         self.bplay.grid(column=1, row=2, sticky='e', pady=5, padx=10)
+        #  Disable text widget, checkbuttons and buttons until a playlist is selected.
+        self.cbres.config(state=DISABLED)
+        self.cbshuf.config(state=DISABLED)
+        self.otext.config(state=DISABLED)
+        self.bdelete.config(state=DISABLED)
         self.bplay.config(state=DISABLED)
         
     def insertDescription(self, value):
+        #  Clear combobox after setting it to read-only to avoid artifacts.
         self.cbox.selection_clear()
         value = self.cbox.get()
         description = self.playlist.loadDescription(value)
