@@ -74,12 +74,18 @@ class Window:
         self.tmain = Text(self.mainframe, width=70, height=15, relief='flat')
         self.tmain.delete(1.0, END)
         self.tmain.grid(column=0, row=1, columnspan=2, sticky='nsew', padx=10)
-        self.bdelete = Button(self.mainframe, text='Delete', command=self.delete, activebackground='#333333', activeforeground='white')
+        self.bdelete = Button(self.mainframe, text='Delete', command=self.delete,\
+                activebackground='#333333', activeforeground='white')
         self.bdelete.grid(column=0, row=2, sticky='w', pady=5, padx=10)
-        self.bplay = Button(self.mainframe, text='Play', command=self.play, activebackground='#333333', activeforeground='white')
+        self.bedit = Button(self.mainframe, text='Edit', command=lambda: self.new(mode='edit'),\
+                activebackground='#333333', activeforeground='white')
+        self.bedit.grid(column=0, row=2, sticky='w', padx=80)
+        self.bplay = Button(self.mainframe, text='Play', command=self.play,\
+                activebackground='#333333', activeforeground='white')
         self.bplay.grid(column=1, row=2, sticky='e', pady=5, padx=10)
         #  Disable text widget, checkbuttons and buttons until a playlist is selected.
-        for widget in (self.cbuttonresume, self.cbuttonshuffle, self.tmain, self.bdelete, self.bplay):
+        self.widget = (self.cbuttonresume, self.cbuttonshuffle, self.tmain, self.bdelete, self.bplay, self.bedit)
+        for widget in self.widget:
             widget.config(state=DISABLED)
         
     def initPlayer(self, value):
@@ -87,25 +93,25 @@ class Window:
         and enable buttons.   '''
         #  Clear combobox after setting it to read-only to avoid artifacts.
         self.cboxplayer.selection_clear()
-        ###
-        value = self.cboxplayer.get()
+        #  Get selected playlist.
+        self.value = self.cboxplayer.get()
         #  Get description.
-        description = self.playlist.loadDescription(value)
+        description = self.playlist.loadDescription(self.value)
         #  Get resume and shuffle status.
-        self.resume = self.playlist.resumePlaylist(value)
-        self.shuffle = self.playlist.shufflePlaylist(value)
+        self.resume = self.playlist.resumePlaylist(self.value)
+        self.shuffle = self.playlist.shufflePlaylist(self.value)
         #  Insert description.
         self.tmain.config(state=NORMAL)
         self.tmain.delete(1.0, END)
         self.tmain.insert(END, description)
-        self.tmain.config(state=DISABLED)
         #  Only enable buttons and show 'resume' and 'shuffle' checkbox when valid playlist is selected.
         #  resume = None when no database record is returned.
         if self.resume != None:
-            for widget in (self.bplay, self.bdelete, self.cbuttonresume, self.cbuttonshuffle):
+            for widget in self.widget: 
                 widget.config(state=NORMAL)
             self.cbuttonresume.grid(column=2, row=0)
             self.cbuttonshuffle.grid(column=3, row=0)
+            self.tmain.config(state=DISABLED)
             #  Toggle checkbuttons on or off.
             self.cbuttonresume_var.set(self.resume)
             self.cbuttonresume.config(state=DISABLED)
@@ -163,11 +169,11 @@ class Window:
             self.root.after(100, self.listen_for_result)
         self.tmain.config(state=DISABLED)
 
-    def new(self):
+    def new(self, mode=None):
+        '''   Create new playlist. 
+        If mode = "edit" same window is used to edit existing playlist.   '''
         self.switchFrame()
         self.newframe.pack(fill=BOTH, expand=True, pady=10)
-        self.cbuttonresume_var = IntVar()
-        self.cbuttonshuffle_var = IntVar()
         for i in range(7):
             Grid.rowconfigure(self.newframe, i, pad=5)
         Grid.columnconfigure(self.newframe, 0, minsize=140)
@@ -181,12 +187,14 @@ class Window:
         self.eurl.grid(column=1, row=2, padx=7, sticky='ew')
         self.lres = Label(self.newframe, text='Resume playback')
         self.lres.grid(column=0, row=3, padx=5, sticky='w')
+        self.cbuttonresume_var = IntVar()
         self.cbuttonresume = Checkbutton(self.newframe, variable=self.cbuttonresume_var,\
                 highlightcolor='white', activebackground='#444444',\
                 highlightbackground='#444444', foreground='#444444')
         self.cbuttonresume.grid(column=1, row=3, sticky='nw')
         self.lshuf = Label(self.newframe, text='Shuffle')
         self.lshuf.grid(column=0, row=4, padx=5, sticky='w')
+        self.cbuttonshuffle_var = IntVar()
         self.cbuttonshuffle = Checkbutton(self.newframe, variable=self.cbuttonshuffle_var,\
                 highlightcolor='white', activebackground='#444444',\
                 highlightbackground='#444444', foreground='#444444')
@@ -197,23 +205,37 @@ class Window:
         self.tdesc.grid(column=1, row=5, padx=7, sticky='nsew')
         self.bcancel = Button(self.newframe, text='Cancel', command=self.player, activebackground='#333333', activeforeground='white')
         self.bcancel.grid(column=1, row=6, padx=7, pady=5, sticky='w')
-        self.bsave = Button(self.newframe, text='Save', command=self.save, activebackground='#333333', activeforeground='white')
+        if mode == 'edit':
+            values = self.playlist.insertPlaylist(self.value)
+            for pid, name, address, description, resume, shuffle in values:
+                self.ename.insert(0, name)
+                self.eurl.insert(0, address)
+                self.cbuttonresume_var.set(resume)
+                self.cbuttonshuffle_var.set(shuffle)
+                self.tdesc.insert(1.0, description)
+                self.bsave = Button(self.newframe, text='Save', command=self.update, activebackground='#333333', activeforeground='white')
+        else:
+            self.bsave = Button(self.newframe, text='Save', command=self.save, activebackground='#333333', activeforeground='white')
         self.bsave.grid(column=1, row=6, padx=7, pady=5, sticky='e')
         self.bsave.config(state=DISABLED)
         self.scaninput()
 
     def scaninput(self):
-        '''Continuously scan "name" and "url" entryfields for input;
-        these fields have to have data before saving to database.'''
-        #  Get the state of 'save' button. Wrap in try statement to suppress stderr when destroying frame.
+        '''Continuously scan "name" and "url" entryfields for input, 
+        before enabling buttons; these fields have to have data 
+        before saving to database.'''
+        #  Wrap in try statement to suppress stderr when destroying frame.
         try:
+            #  Get the state of save button. 
             state = str(self.bsave['state'])
         except TclError:
             return
         #  Start scanning of input. 
         try:
             if not self.ename.get() == '' and not self.eurl.get() == '':
-                #  If required fields have input, stop scanning the button.
+                #  If required fields have input, enable the save button.
+                #  When save button is active, stop scanning to prevent
+                #  mouse-over event glitch.
                 if state == 'disabled':
                     self.bsave.config(state=NORMAL)
             else:
@@ -231,6 +253,12 @@ class Window:
         
     def delete(self):
         self.playlist.deletePlaylist(self.cboxplayer_var.get())
+        self.player()
+
+    def update(self):
+        playlist = Playlist(name=self.ename.get(), address=self.eurl.get(),\
+                description=self.tdesc.get(1.0, END), resume=self.cbuttonresume_var.get(), shuffle=self.cbuttonshuffle_var.get())
+        playlist.updatePlaylist(self.value)
         self.player()
         
 if __name__ == '__main__':

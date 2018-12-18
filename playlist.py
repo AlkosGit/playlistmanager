@@ -13,7 +13,7 @@ class Playlist:
         self.conn = db.connection
         self.cur = db.cursor
 
-    def savePlaylist(self):
+    def sanitizePlaylist(self):
         #  check for empty value
         if not self.address:
             pass
@@ -22,9 +22,21 @@ class Playlist:
             if 'youtube.com' and 'list' in self.address:
                 url = self.address.rsplit('list=')
                 self.address = 'https://www.youtube.com/watch?list={}'.format(url[1])
-            self.cur.execute('insert into url (name, address, description, resume, shuffle) values (?,?,?,?,?)',\
+        return self.address
+
+    def savePlaylist(self):
+        self.sanitizePlaylist()
+        self.cur.execute('insert into url (name, address, description, resume, shuffle) values (?,?,?,?,?)',\
                     (self.name, self.address, self.description, self.resume, self.shuffle))
-            self.conn.commit()
+        self.conn.commit()
+
+    def updatePlaylist(self, value):
+        self.sanitizePlaylist()
+        playlist = value.split()
+        self.cur.execute('update url set name=?, address=?, description=?, resume=?, shuffle=? where id=?',\
+                (self.name, self.address, self.description, self.resume, self.shuffle, playlist[0]))
+        self.conn.commit()
+
 
     def loadPlaylist(self):
         playlist = []
@@ -79,3 +91,9 @@ class Playlist:
         except (sqlite3.OperationalError, IndexError):
             pass
         self.conn.commit()
+
+    def insertPlaylist(self, value):
+        playlist = value.split()
+        values = self.cur.execute('select * from url where id=' + playlist[0])
+        return values
+
