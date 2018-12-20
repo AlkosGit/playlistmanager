@@ -4,6 +4,7 @@ from tkinter import *
 from tkinter import ttk, filedialog
 import subprocess
 import threading, queue
+import os
 
 class Window:
     def __init__(self):
@@ -19,13 +20,14 @@ class Window:
         ###
         self.root.title('Playlist Manager')
         #  Create frames.
-        self.frames = ('self.mainframe', 'self.topframe', 'self.newframe', 'self.delframe')
+        self.frames = ('self.mainframe', 'self.topframe', 'self.newframe', 'self.delframe', 'self.downframe')
         for f in self.frames:
             exec('{} = Frame(self.root)'.format(f))
         #  Create filemenu.
         self.menubar = Menu(self.root, activebackground='#555555', activeforeground='#FFFFFF')
         self.filemenu = Menu(self.menubar, tearoff=0, activebackground='#555555', activeforeground='#FFFFFF')
-        self.filemenu.add_command(label='New', command=self.new)
+        self.filemenu.add_command(label='New playlist', command=self.new)
+        self.filemenu.add_command(label='Download playlist', command=self.download)
         self.filemenu.add_separator()
         self.filemenu.add_command(label='Exit', command=self.root.destroy)
         self.menubar.add_cascade(label='File', menu=self.filemenu)
@@ -42,6 +44,10 @@ class Window:
         Grid.rowconfigure(self.newframe, 5, weight=1)
         Grid.columnconfigure(self.newframe, 1, weight=1)
         Grid.columnconfigure(self.topframe, 2, minsize=150)
+        Grid.columnconfigure(self.newframe, 0, minsize=140)
+        Grid.columnconfigure(self.downframe, 0, minsize=140)
+        Grid.columnconfigure(self.downframe, 1, weight=1)
+        Grid.rowconfigure(self.downframe, 2, weight=1)
 
     def player(self):
         '''   This is the main window.  '''
@@ -122,7 +128,7 @@ class Window:
         '''   Player runs in own thread. 
         Store output from player in thread queue.   '''
         #  Determine which player command to use; Twitch videos need 'streamlink' to play in mpv.
-        #  Resume and shuffle not supported on Twitch streams.
+        #  Resume and shuffle not supported by Twitch streams.
         if 'twitch.tv' in self.url:
             playercmd, streamparm, streamopts = '/usr/bin/streamlink', '-p mpv', 'best'
             #  Enable fast-forward, seek etc.
@@ -165,19 +171,34 @@ class Window:
         #  Call listener method every 100 msec.
         self.root.after(100, self.listen_for_result)
 
-    def listen_for_result(self):
+    def listen_for_result(self, mode=None):
         '''   Keep listening for updated output from player.   '''
-        self.tmain.config(state=NORMAL)
+        try:
+            if mode == 'download':
+                self.tdownload.config(state=NORMAL)
+            else:
+                self.tmain.config(state=NORMAL)
+        except TclError:
+            return
         try:
             #  Capturing an output stream, so we need to loop.
             while True:
                 #  Retrieve the output from thread queue and insert into text widget.
                 self.res = self.thread_queue.get(0)
-                self.tmain.insert(END, self.res)
+                if mode == 'download':
+                    self.tdownload.insert(END, self.res)
+                else:
+                    self.tmain.insert(END, self.res)
         except queue.Empty:
             #  No updated output from stream, so keep looping.
-            self.root.after(100, self.listen_for_result)
-        self.tmain.config(state=DISABLED)
+            if mode == 'download':
+                self.root.after(100, lambda: self.listen_for_result(mode='download'))
+            else:
+                self.root.after(100, self.listen_for_result)
+        if mode == 'download':
+            self.tdownload.config(state=DISABLED)
+        else:
+            self.tmain.config(state=DISABLED)
 
     def new(self, mode=None):
         '''   Create new playlist. 
@@ -186,7 +207,6 @@ class Window:
         self.newframe.pack(fill=BOTH, expand=True, pady=10)
         for i in range(7):
             Grid.rowconfigure(self.newframe, i, pad=5)
-        Grid.columnconfigure(self.newframe, 0, minsize=140)
         self.lname = Label(self.newframe, text='Name')
         self.lname.grid(column=0, row=1, padx=5, sticky='w')
         self.ename = Entry(self.newframe, highlightcolor='white', insertbackground='white')
@@ -301,6 +321,70 @@ class Window:
                 description=self.tdesc.get(1.0, END), resume=self.cbuttonresume_var.get(), shuffle=self.cbuttonshuffle_var.get())
         playlist.updatePlaylist(self.value)
         self.player()
+
+    def download(self):
+        self.switchFrame()
+        self.downframe.pack(fill=BOTH, expand=True, pady=10)
+        for i in range(4):
+            Grid.rowconfigure(self.downframe, i, pad=5)
+        self.ldownload_url = Label(self.downframe, text='URL')
+        self.ldownload_url.grid(column=0, row=0, padx=10, sticky='w')
+        self.edownload_url = Entry(self.downframe, highlightcolor='white', insertbackground='white')
+        self.edownload_url.grid(column=1, row=0, padx=10, sticky='ew')
+        self.ldownload_dir = Label(self.downframe, text='Destination')
+        self.ldownload_dir.grid(column=0, row=1, padx=10, sticky='w')
+        self.edownload_dir = Entry(self.downframe, highlightcolor='white', insertbackground='white')
+        self.edownload_dir.grid(column=1, row=1, padx=10, sticky='ew')
+        self.tdownload = Text(self.downframe, width=55, height=10, relief='flat', highlightcolor='white', insertbackground='white')
+        self.tdownload.grid(column=0, row=2, columnspan=2, padx=10, pady=5, sticky='nsew')
+        self.bcancel_download = Button(self.downframe, text='Cancel', command=self.cancelDownload,\
+                activebackground='#333333', activeforeground='white')
+        self.bcancel_download.grid(column=0, row=3, padx=10, sticky='w')
+        self.bsave_download = Button(self.downframe, text='Download', command=self.saveDownload,\
+                activebackground='#333333', activeforeground='white')
+        self.bsave_download.grid(column=1, row=3, padx=10, sticky='e')
+        self.bsave_download.config(state=DISABLED)
+        self.scanDownload()
+
+    def scanDownload(self):
+        state = str(self.bsave_download['state'])
+        if not self.edownload_url.get() == '' and not self.edownload_dir.get() == '':
+            if state == 'disabled':
+                self.bsave_download.config(state=NORMAL)
+        else:
+            self.bsave_download.config(state=DISABLED)
+        self.root.after(100, self.scanDownload)
+
+    def saveDownload(self):
+        '''   Start download in separate thread.   '''
+        #  Create thread queue to monitor output from thread.
+        self.thread_queue = queue.Queue()
+        #  Create thread and pass thread queue
+        self.thread = threading.Thread(target=self.downloop, args=(self.thread_queue, self.edownload_url.get(), self.edownload_dir.get()))
+        self.thread.start()
+        #  Call listener method every 100 msec.
+        self.root.after(100, lambda: self.listen_for_result(mode='download'))
+
+    def downloop(self, thread_queue, url, path):
+        #  Remove trailing '/', if any.
+        if '/' in (path[-1:]):
+            path = path[:-1]
+        parms = '{}/%(title)s.%(ext)s'.format(path)
+        self.process = subprocess.Popen(['/usr/bin/youtube-dl', '-o', parms, url], stdout=subprocess.PIPE)
+
+        #  Output is a continuous stream, so we need to loop.
+        while True:
+            output = self.process.stdout.readline()
+            if not output:
+                break
+            else:
+                #  Store output in thread queue
+                thread_queue.put(output)
+
+    def cancelDownload(self):
+        os.system('killall youtube-dl')
+        self.player()
+
         
 if __name__ == '__main__':
     win = Window()
