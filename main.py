@@ -121,17 +121,27 @@ class Window:
     def runloop(self, thread_queue, resume, shuffle):
         '''   Player runs in own thread. 
         Store output from player in thread queue.   '''
+        #  Determine which player command to use; Twitch videos need 'streamlink' to play in mpv.
+        #  Resume and shuffle not supported on Twitch streams.
+        if 'twitch.tv' in self.url:
+            playercmd, streamparm, streamopts = '/usr/bin/streamlink', '-p mpv', 'best'
+            #  Enable fast-forward, seek etc.
+            streamseek = '--player-passthrough=hls'
+        else:
+            playercmd = '/usr/bin/mpv'
+            resumeopt = '--save-position-on-quit'
+            shuffleopt = '--shuffle'
         #  Check for selected options.
         if resume and shuffle:
-            self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', '--shuffle', self.url], stdout=subprocess.PIPE)
+            self.process = subprocess.Popen([playercmd, resumeopt, shuffleopt, self.url], stdout=subprocess.PIPE)
         else:
             if resume:
-                self.process = subprocess.Popen(['/usr/bin/mpv', '--save-position-on-quit', self.url], stdout=subprocess.PIPE)
+                self.process = subprocess.Popen([playercmd, resumeopt, self.url], stdout=subprocess.PIPE)
             else:
                 if shuffle:
-                    self.process = subprocess.Popen(['/usr/bin/mpv', '--shuffle', '--loop', self.url], stdout=subprocess.PIPE)
+                    self.process = subprocess.Popen([playercmd, shuffleopt, '--loop', self.url], stdout=subprocess.PIPE)
                 else:
-                    self.process = subprocess.Popen(['/usr/bin/mpv', self.url], stdout=subprocess.PIPE)
+                    self.process = subprocess.Popen([playercmd, streamparm, streamseek, self.url, streamopts], stdout=subprocess.PIPE)
 
         #  Output is a continuous stream, so we need to loop.
         while True:
@@ -192,6 +202,10 @@ class Window:
                 highlightcolor='white', activebackground='#444444',\
                 highlightbackground='#444444', foreground='#444444')
         self.cbuttonresume.grid(column=1, row=3, sticky='nw')
+        #  Messagelabel for resume not supported by Twitch. Hidden by default.
+        self.lres_msg = Label(self.newframe, text='Resume not supported by Twitch streams!')
+        self.lres_msg.grid_forget()
+        ###
         self.lshuf = Label(self.newframe, text='Shuffle')
         self.lshuf.grid(column=0, row=4, padx=5, sticky='w')
         self.cbuttonshuffle_var = IntVar()
@@ -199,6 +213,8 @@ class Window:
                 highlightcolor='white', activebackground='#444444',\
                 highlightbackground='#444444', foreground='#444444')
         self.cbuttonshuffle.grid(column=1, row=4, sticky='w')
+        self.lshuf_msg = Label(self.newframe, text='Shuffle not supported by Twitch streams!')
+        self.lshuf_msg.grid_forget()
         self.ldesc = Label(self.newframe, text='Description')
         self.ldesc.grid(column=0, row=5, padx=5, pady=3, sticky='nw')
         self.tdesc = Text(self.newframe, width=55, height=10, relief='flat', highlightcolor='white', insertbackground='white')
@@ -224,28 +240,53 @@ class Window:
         '''Continuously scan "name" and "url" entryfields for input, 
         before enabling buttons; these fields have to have data 
         before saving to database.'''
+        ok = True
         #  Wrap in try statement to suppress stderr when destroying frame.
         try:
             #  Get the state of save button. 
             state = str(self.bsave['state'])
         except TclError:
             return
-        #  Start scanning of input. 
+        #  Start scanning of input.
         try:
             if not self.ename.get() == '' and not self.eurl.get() == '':
-                #  If required fields have input, enable the save button.
+                #  Scan checkbuttons state; resume and shuffle is not supported by Twitch streams.
+                if 'twitch.tv' in self.eurl.get():
+                    if self.cbuttonresume_var.get():
+                        self.lres_msg.grid(column=1, row=3, padx=25, sticky='w')
+                        ok = False
+                        self.bsave.config(state=DISABLED)
+                    else:
+                        self.lres_msg.grid_forget()
+                        ok = True
+                    if self.cbuttonshuffle_var.get():
+                        self.lshuf_msg.grid(column=1, row=4, padx=25, sticky='w')
+                        ok = False
+                        self.bsave.config(state=DISABLED)
+                    else:
+                        self.lshuf_msg.grid_forget()
+                #  If required fields have input, enable the save button and checkbuttons.
                 #  When save button is active, stop scanning to prevent
                 #  mouse-over event glitch.
-                if state == 'disabled':
+                if state == 'disabled' and ok:
                     self.bsave.config(state=NORMAL)
+                    self.cbuttonresume.config(state=NORMAL)
+                    self.cbuttonshuffle.config(state=NORMAL)
             else:
                 self.bsave.config(state=DISABLED)
+                self.cbuttonresume.deselect()
+                self.cbuttonshuffle.deselect()
+                self.cbuttonresume.config(state=DISABLED)
+                self.cbuttonshuffle.config(state=DISABLED)
             self.root.after(100, self.scaninput)
         #  Suppress stderr when destroying frame.    
         except TclError:
             return
 
     def save(self):
+        if 'twitch.tv' in self.eurl.get():
+            self.cbuttonresume_var.set(0)
+            self.cbuttonshuffle_var.set(0)
         playlist = Playlist(name=self.ename.get(), address=self.eurl.get(),\
                 description=self.tdesc.get(1.0, END), resume=self.cbuttonresume_var.get(), shuffle=self.cbuttonshuffle_var.get())
         playlist.savePlaylist()
