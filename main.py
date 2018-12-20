@@ -1,7 +1,7 @@
 # file: playlistmanager/main.py
 from playlist import Playlist
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, filedialog
 import subprocess
 import threading, queue
 
