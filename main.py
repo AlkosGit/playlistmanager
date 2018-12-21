@@ -348,10 +348,19 @@ class Window:
         self.scanDownload()
 
     def scanDownload(self):
-        state = str(self.bsave_download['state'])
+        try:
+            state = str(self.bsave_download['state'])
+        except TclError:
+            return
         if not self.edownload_url.get() == '' and not self.edownload_dir.get() == '':
-            if state == 'disabled':
-                self.bsave_download.config(state=NORMAL)
+            #  If download in progress, disable download button.
+            if len(self.tdownload.get(1.0, END)) == 1:
+                if state == 'disabled':
+                    self.bsave_download.config(state=NORMAL)
+            else:
+                self.bsave_download.config(state=DISABLED)
+                self.edownload_url.config(state=DISABLED, disabledbackground='#444444')
+                self.edownload_dir.config(state=DISABLED, disabledbackground='#444444')
         else:
             self.bsave_download.config(state=DISABLED)
         self.root.after(100, self.scanDownload)
@@ -372,6 +381,7 @@ class Window:
             path = path[:-1]
         parms = '{}/%(title)s.%(ext)s'.format(path)
         self.process = subprocess.Popen(['/usr/bin/youtube-dl', '-o', parms, url], stdout=subprocess.PIPE)
+        #  Disable download button.
 
         #  Output is a continuous stream, so we need to loop.
         while True:
@@ -383,10 +393,13 @@ class Window:
                 thread_queue.put(output)
 
     def cancelDownload(self):
-        os.system('killall youtube-dl')
+        try:
+            #  Suppress stderr and stdout to console.
+            os.system('killall youtube-dl >/dev/null 2>&1')
+        except:
+            pass
         self.player()
 
-        
 if __name__ == '__main__':
     win = Window()
     win.player()
