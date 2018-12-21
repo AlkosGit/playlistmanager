@@ -137,7 +137,6 @@ class Window:
             playercmd = '/usr/bin/mpv'
             resumeopt = '--save-position-on-quit'
             shuffleopt = '--shuffle'
-            streamparm, streamseek, streamopts = '', '', ''
         #  Check for selected options.
         if resume and shuffle:
             self.process = subprocess.Popen([playercmd, resumeopt, shuffleopt, self.url], stdout=subprocess.PIPE)
@@ -148,7 +147,10 @@ class Window:
                 if shuffle:
                     self.process = subprocess.Popen([playercmd, shuffleopt, '--loop', self.url], stdout=subprocess.PIPE)
                 else:
-                    self.process = subprocess.Popen([playercmd, streamparm, streamseek, self.url, streamopts], stdout=subprocess.PIPE)
+                    if 'twitch.tv' in self.url:
+                        self.process = subprocess.Popen([playercmd, streamparm, streamseek, self.url, streamopts], stdout=subprocess.PIPE)
+                    else:
+                        self.process = subprocess.Popen([playercmd, self.url], stdout=subprocess.PIPE)
 
         #  Output is a continuous stream, so we need to loop.
         while True:
