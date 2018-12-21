@@ -169,8 +169,8 @@ class Window:
         #  Create thread and pass thread queue
         self.thread = threading.Thread(target=self.runloop, args=(self.thread_queue, self.resume, self.shuffle))
         self.thread.start()
-        #  Call listener method every 100 msec.
-        self.root.after(100, self.listen_for_result)
+        #  Call listener method.
+        self.listen_for_result()
 
     def listen_for_result(self, mode=None):
         '''   Keep listening for updated output from player.   '''
@@ -369,19 +369,25 @@ class Window:
         '''   Start download in separate thread.   '''
         #  Create thread queue to monitor output from thread.
         self.thread_queue = queue.Queue()
-        #  Create thread and pass thread queue
+        #  Create thread and pass thread queue.
         self.thread = threading.Thread(target=self.downloop, args=(self.thread_queue, self.edownload_url.get(), self.edownload_dir.get()))
         self.thread.start()
         #  Call listener method every 100 msec.
-        self.root.after(100, lambda: self.listen_for_result(mode='download'))
+        self.listen_for_result(mode='download')
 
     def downloop(self, thread_queue, url, path):
         #  Remove trailing '/', if any.
         if '/' in (path[-1:]):
             path = path[:-1]
-        parms = '{}/%(title)s.%(ext)s'.format(path)
-        self.process = subprocess.Popen(['/usr/bin/youtube-dl', '-o', parms, url], stdout=subprocess.PIPE)
-        #  Disable download button.
+        #  Streamlink needs a filename; extract from URL.
+        if 'twitch.tv' in url:
+            filename = url.split('/')[-1]
+            fullpath = '{}/{}.mp4'.format(path, filename)
+            self.process = subprocess.Popen(['/usr/bin/streamlink', '-p mpv', '-f', url, 'best', '-o', fullpath], stdout=subprocess.PIPE)
+        else:
+            #  Youtube URL.
+            fullpath = '{}/%(title)s.%(ext)s'.format(path)
+            self.process = subprocess.Popen(['/usr/bin/youtube-dl', '-o', fullpath, url], stdout=subprocess.PIPE)
 
         #  Output is a continuous stream, so we need to loop.
         while True:
@@ -389,15 +395,13 @@ class Window:
             if not output:
                 break
             else:
-                #  Store output in thread queue
+                #  Store output in thread queue.
                 thread_queue.put(output)
 
     def cancelDownload(self):
-        try:
-            #  Suppress stderr and stdout to console.
-            os.system('killall youtube-dl >/dev/null 2>&1')
-        except:
-            pass
+        #  Suppress stderr and stdout to console.
+        os.system('killall youtube-dl >/dev/null 2>&1')
+        os.system('killall streamlink >/dev/null 2>&1')
         self.player()
 
 if __name__ == '__main__':
