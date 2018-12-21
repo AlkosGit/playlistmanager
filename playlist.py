@@ -19,7 +19,7 @@ class Playlist:
             pass
         else:
             #  Youtube playlist url's need to be truncated for mpv.
-            if 'youtube.com' and 'list' in self.address:
+            if 'youtube.com' and 'list=' in self.address:
                 url = self.address.rsplit('list=')
                 self.address = 'https://www.youtube.com/watch?list={}'.format(url[1])
         return self.address

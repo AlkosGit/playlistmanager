@@ -137,6 +137,7 @@ class Window:
             playercmd = '/usr/bin/mpv'
             resumeopt = '--save-position-on-quit'
             shuffleopt = '--shuffle'
+            streamparm, streamseek, streamopts = '', '', ''
         #  Check for selected options.
         if resume and shuffle:
             self.process = subprocess.Popen([playercmd, resumeopt, shuffleopt, self.url], stdout=subprocess.PIPE)
@@ -211,7 +212,7 @@ class Window:
         self.lname.grid(column=0, row=1, padx=5, sticky='w')
         self.ename = Entry(self.newframe, highlightcolor='white', insertbackground='white')
         self.ename.grid(column=1, row=1, padx=7, sticky='ew')
-        self.lurl = Label(self.newframe, text='URL')
+        self.lurl = Label(self.newframe, text='URL or directory')
         self.lurl.grid(column=0, row=2, padx=5, sticky='w')
         self.eurl = Entry(self.newframe, highlightcolor='white', insertbackground='white')
         self.eurl.grid(column=1, row=2, padx=7, sticky='ew')
