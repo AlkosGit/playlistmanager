@@ -186,7 +186,7 @@ class Window:
         self.thread.result_queue = self.thread_queue
         if 'stopped' in str(self.thread):
             if mode == 'download':
-                print ('stopped')
+                self.lstatus.config(text='Download finished.')
                 self.scanDownload()
             else:
                 for button in self.bdelete, self.bplay, self.bedit:
@@ -196,6 +196,8 @@ class Window:
         try:
             if mode == 'download':
                 self.tdownload.config(state=NORMAL)
+                self.lstatus.grid(column=1, row=3)
+                self.lstatus.config(text='Downloading...')
             else:
                 self.tmain.config(state=NORMAL)
         except TclError:
@@ -352,24 +354,27 @@ class Window:
         self.ldownload_url = Label(self.downframe, text='URL')
         self.ldownload_url.grid(column=0, row=0, sticky='w')
         self.edownload_url = Entry(self.downframe, highlightcolor='white', insertbackground='white')
-        self.edownload_url.grid(column=1, row=0, sticky='ew')
+        self.edownload_url.grid(column=1, row=0, columnspan=2, sticky='ew')
         self.ldownload_dir = Label(self.downframe, text='Destination')
         self.ldownload_dir.grid(column=0, row=1, sticky='w')
         self.edownload_dir = Entry(self.downframe, highlightcolor='white', insertbackground='white')
-        self.edownload_dir.grid(column=1, row=1, sticky='ew')
+        self.edownload_dir.grid(column=1, row=1, columnspan=2, sticky='ew')
         scrollbar = Scrollbar(self.downframe)
         scrollbar.grid(column=2, row=2, pady=5, sticky='ns')
         self.tdownload = Text(self.downframe, width=55, height=10, relief='flat', highlightcolor='white',\
                 insertbackground='white', yscrollcommand=scrollbar.set)
-        self.tdownload.grid(column=0, row=2, columnspan=2, pady=5, sticky='nsew')
+        self.tdownload.grid(column=0, row=2, columnspan=3, pady=5, sticky='nsew')
         scrollbar.config(command=self.tdownload.yview)
         self.bcancel_download = Button(self.downframe, text='Cancel', command=self.cancelDownload,\
                 activebackground='#333333', activeforeground='white')
         self.bcancel_download.grid(column=0, row=3, sticky='w')
+        self.lstatus = Label(self.downframe)
+        self.lstatus.grid(column=1, row=3)
         self.bsave_download = Button(self.downframe, text='Download', command=self.saveDownload,\
                 activebackground='#333333', activeforeground='white')
-        self.bsave_download.grid(column=1, row=3, sticky='e')
+        self.bsave_download.grid(column=2, row=3, sticky='e')
         self.tdownload.config(state=DISABLED)
+        self.lstatus.grid_forget()
         self.scanDownload()
 
     def scanDownload(self, exit=False):
