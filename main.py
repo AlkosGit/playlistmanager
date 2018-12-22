@@ -93,7 +93,7 @@ class Window:
                 activebackground='#333333', activeforeground='white')
         self.bplay.grid(column=0, row=2, sticky='e', pady=5)
         #  Disable text widget, checkbuttons and buttons until a playlist is selected.
-        self.widget = (self.cbuttonresume, self.cbuttonshuffle, self.bdelete, self.bplay, self.bedit)
+        self.widget = (self.cbuttonresume, self.cbuttonshuffle, self.tmain, self.bdelete, self.bplay, self.bedit)
         for widget in self.widget:
             widget.config(state=DISABLED)
         
@@ -174,11 +174,25 @@ class Window:
         #  Create thread and pass thread queue
         self.thread = threading.Thread(target=self.runloop, args=(self.thread_queue, self.resume, self.shuffle))
         self.thread.start()
+        #  Disable buttons while playing.
+        for button in self.bdelete, self.bplay, self.bedit:
+            button.config(state=DISABLED)
         #  Call listener method.
         self.listen_for_result()
 
     def listen_for_result(self, mode=None):
         '''   Keep listening for updated output from player.   '''
+        #  Monitor thread output; quit if thread has exited.
+        self.thread.result_queue = self.thread_queue
+        if 'stopped' in str(self.thread):
+            if mode == 'download':
+                print ('stopped')
+                self.scanDownload()
+            else:
+                for button in self.bdelete, self.bplay, self.bedit:
+                    button.config(state=NORMAL)
+            return
+
         try:
             if mode == 'download':
                 self.tdownload.config(state=NORMAL)
@@ -355,26 +369,20 @@ class Window:
         self.bsave_download = Button(self.downframe, text='Download', command=self.saveDownload,\
                 activebackground='#333333', activeforeground='white')
         self.bsave_download.grid(column=1, row=3, sticky='e')
-        self.bsave_download.config(state=DISABLED)
+        self.tdownload.config(state=DISABLED)
         self.scanDownload()
 
-    def scanDownload(self):
+    def scanDownload(self, exit=False):
         try:
             state = str(self.bsave_download['state'])
         except TclError:
             return
         if not self.edownload_url.get() == '' and not self.edownload_dir.get() == '':
-            #  If download in progress, disable download button.
-            if len(self.tdownload.get(1.0, END)) == 1:
-                if state == 'disabled':
-                    self.bsave_download.config(state=NORMAL)
-            else:
-                self.bsave_download.config(state=DISABLED)
-                self.edownload_url.config(state=DISABLED, disabledbackground='#444444')
-                self.edownload_dir.config(state=DISABLED, disabledbackground='#444444')
+            if state == 'disabled':
+                self.bsave_download.config(state=NORMAL)
         else:
             self.bsave_download.config(state=DISABLED)
-        self.root.after(100, self.scanDownload)
+        self.after_id = self.root.after(100, self.scanDownload)
 
     def saveDownload(self):
         '''   Start download in separate thread.   '''
@@ -383,7 +391,11 @@ class Window:
         #  Create thread and pass thread queue.
         self.thread = threading.Thread(target=self.downloop, args=(self.thread_queue, self.edownload_url.get(), self.edownload_dir.get()))
         self.thread.start()
-        #  Call listener method every 100 msec.
+        #  Signal scanDownload to exit.
+        self.root.after_cancel(self.after_id)
+        #  Disable download button.
+        self.bsave_download.config(state=DISABLED)
+        #  Call listener method.
         self.listen_for_result(mode='download')
 
     def downloop(self, thread_queue, url, path):
@@ -410,6 +422,8 @@ class Window:
                 thread_queue.put(output)
 
     def cancelDownload(self):
+        #  Signal scanDownload to exit.
+        self.root.after_cancel(self.after_id)
         #  Suppress stderr and stdout to console.
         os.system('killall youtube-dl >/dev/null 2>&1')
         os.system('killall streamlink >/dev/null 2>&1')
