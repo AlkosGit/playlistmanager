@@ -53,7 +53,7 @@ class Window:
         '''   This is the main window.  '''
         self.switchFrame()
         self.topframe.pack(fill=BOTH)
-        self.mainframe.pack(fill=BOTH, expand=True)
+        self.mainframe.pack(fill=BOTH, expand=True, padx=10)
         self.lplaylist = Label(self.topframe, text='Select a playlist:')
         self.lplaylist.grid(column=0, row=0, padx=10)
         self.cboxplayer_var = StringVar()
@@ -77,20 +77,23 @@ class Window:
         self.cbuttonresume.grid_forget()
         self.cbuttonshuffle.grid_forget()
         ###
-        self.tmain = Text(self.mainframe, width=70, height=15, relief='flat')
+        scrollbar = Scrollbar(self.mainframe)
+        scrollbar.grid(column=1, row=1, sticky='ns')
+        self.tmain = Text(self.mainframe, width=70, height=15, relief='flat', yscrollcommand=scrollbar.set)
         self.tmain.delete(1.0, END)
-        self.tmain.grid(column=0, row=1, columnspan=2, sticky='nsew', padx=10)
+        self.tmain.grid(column=0, row=1, sticky='nsew')
+        scrollbar.config(command=self.tmain.yview)
         self.bdelete = Button(self.mainframe, text='Delete', command=self.delete,\
                 activebackground='#333333', activeforeground='white')
-        self.bdelete.grid(column=0, row=2, sticky='w', pady=5, padx=10)
+        self.bdelete.grid(column=0, row=2, sticky='w', pady=5)
         self.bedit = Button(self.mainframe, text='Edit', command=lambda: self.new(mode='edit'),\
                 activebackground='#333333', activeforeground='white')
-        self.bedit.grid(column=0, row=2, sticky='w', padx=80)
+        self.bedit.grid(column=0, row=2, sticky='w', padx=70)
         self.bplay = Button(self.mainframe, text='Play', command=self.play,\
                 activebackground='#333333', activeforeground='white')
-        self.bplay.grid(column=1, row=2, sticky='e', pady=5, padx=10)
+        self.bplay.grid(column=0, row=2, sticky='e', pady=5)
         #  Disable text widget, checkbuttons and buttons until a playlist is selected.
-        self.widget = (self.cbuttonresume, self.cbuttonshuffle, self.tmain, self.bdelete, self.bplay, self.bedit)
+        self.widget = (self.cbuttonresume, self.cbuttonshuffle, self.bdelete, self.bplay, self.bedit)
         for widget in self.widget:
             widget.config(state=DISABLED)
         
@@ -190,8 +193,10 @@ class Window:
                 self.res = self.thread_queue.get(0)
                 if mode == 'download':
                     self.tdownload.insert(END, self.res)
+                    self.tdownload.see(END)
                 else:
                     self.tmain.insert(END, self.res)
+                    self.tmain.see(END)
         except queue.Empty:
             #  No updated output from stream, so keep looping.
             if mode == 'download':
@@ -327,25 +332,29 @@ class Window:
 
     def download(self):
         self.switchFrame()
-        self.downframe.pack(fill=BOTH, expand=True, pady=10)
+        self.downframe.pack(fill=BOTH, expand=True, padx=10, pady=5)
         for i in range(4):
             Grid.rowconfigure(self.downframe, i, pad=5)
         self.ldownload_url = Label(self.downframe, text='URL')
-        self.ldownload_url.grid(column=0, row=0, padx=10, sticky='w')
+        self.ldownload_url.grid(column=0, row=0, sticky='w')
         self.edownload_url = Entry(self.downframe, highlightcolor='white', insertbackground='white')
-        self.edownload_url.grid(column=1, row=0, padx=10, sticky='ew')
+        self.edownload_url.grid(column=1, row=0, sticky='ew')
         self.ldownload_dir = Label(self.downframe, text='Destination')
-        self.ldownload_dir.grid(column=0, row=1, padx=10, sticky='w')
+        self.ldownload_dir.grid(column=0, row=1, sticky='w')
         self.edownload_dir = Entry(self.downframe, highlightcolor='white', insertbackground='white')
-        self.edownload_dir.grid(column=1, row=1, padx=10, sticky='ew')
-        self.tdownload = Text(self.downframe, width=55, height=10, relief='flat', highlightcolor='white', insertbackground='white')
-        self.tdownload.grid(column=0, row=2, columnspan=2, padx=10, pady=5, sticky='nsew')
+        self.edownload_dir.grid(column=1, row=1, sticky='ew')
+        scrollbar = Scrollbar(self.downframe)
+        scrollbar.grid(column=2, row=2, pady=5, sticky='ns')
+        self.tdownload = Text(self.downframe, width=55, height=10, relief='flat', highlightcolor='white',\
+                insertbackground='white', yscrollcommand=scrollbar.set)
+        self.tdownload.grid(column=0, row=2, columnspan=2, pady=5, sticky='nsew')
+        scrollbar.config(command=self.tdownload.yview)
         self.bcancel_download = Button(self.downframe, text='Cancel', command=self.cancelDownload,\
                 activebackground='#333333', activeforeground='white')
-        self.bcancel_download.grid(column=0, row=3, padx=10, sticky='w')
+        self.bcancel_download.grid(column=0, row=3, sticky='w')
         self.bsave_download = Button(self.downframe, text='Download', command=self.saveDownload,\
                 activebackground='#333333', activeforeground='white')
-        self.bsave_download.grid(column=1, row=3, padx=10, sticky='e')
+        self.bsave_download.grid(column=1, row=3, sticky='e')
         self.bsave_download.config(state=DISABLED)
         self.scanDownload()
 
