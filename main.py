@@ -9,7 +9,7 @@ import os
 class Window:
     def __init__(self):
         self.playlist = Playlist() 
-        self.root = Tk()
+        self.root = Tk(className='playlistmanager')
         #  Import widget style sheet.
         self.root.option_readfile('stylesheet.txt')
         #  Make window appear centered on screen.
