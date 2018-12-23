@@ -37,7 +37,6 @@ class Playlist:
                 (self.name, self.address, self.description, self.resume, self.shuffle, playlist[0]))
         self.conn.commit()
 
-
     def loadPlaylist(self):
         playlist = []
         values = self.cur.execute('select id, name from url')

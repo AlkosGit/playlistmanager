@@ -9,7 +9,7 @@ import os
 class Window:
     def __init__(self):
         self.playlist = Playlist() 
-        self.root = Tk()
+        self.root = Tk(className='playlistmanager')
         self.root.title('Playlist Manager')
         #  Import widget style sheet.
         self.root.option_readfile('stylesheet.txt')
@@ -180,7 +180,8 @@ class Window:
         self.listen_for_result()
 
     def listen_for_result(self, mode=None):
-        '''   Keep listening for updated output from player.   '''
+        '''   Keep listening for updated output from player.
+        If mode = "download" keep track of download process. '''
         #  Monitor thread output; quit if thread has exited.
         self.thread.result_queue = self.thread_queue
         if 'stopped' in str(self.thread):
@@ -191,16 +192,15 @@ class Window:
                 for button in self.bdelete, self.bplay, self.bedit:
                     button.config(state=NORMAL)
             return
+        ###
 
-        try:
-            if mode == 'download':
-                self.tdownload.config(state=NORMAL)
-                self.lstatus.grid(column=1, row=3)
-                self.lstatus.config(text='Downloading...')
-            else:
-                self.tmain.config(state=NORMAL)
-        except TclError:
-            return
+        if mode == 'download':
+            self.tdownload.config(state=NORMAL)
+            self.lstatus.grid(column=1, row=3)
+            self.lstatus.config(text='Downloading...')
+        else:
+            self.tmain.config(state=NORMAL)
+
         try:
             #  Capturing an output stream, so we need to loop.
             while True:
@@ -215,13 +215,14 @@ class Window:
         except queue.Empty:
             #  No updated output from stream, so keep looping.
             if mode == 'download':
-                self.root.after(100, lambda: self.listen_for_result(mode='download'))
+                self.listen_id = self.root.after(100, lambda: self.listen_for_result(mode='download'))
             else:
-                self.root.after(100, self.listen_for_result)
-        if mode == 'download':
-            self.tdownload.config(state=DISABLED)
-        else:
-            self.tmain.config(state=DISABLED)
+                self.listen_id = self.root.after(100, self.listen_for_result)
+        
+        #if mode == 'download':
+        #    self.tdownload.config(state=DISABLED)
+        #else:
+        #    self.tmain.config(state=DISABLED)
 
     def new(self, mode=None):
         '''   Create new playlist. 
@@ -376,7 +377,8 @@ class Window:
         self.lstatus.grid_forget()
         self.scanDownload()
 
-    def scanDownload(self, exit=False):
+    def scanDownload(self):
+        #  Scan input fields for data before enabling buttons.
         try:
             state = str(self.bsave_download['state'])
         except TclError:
@@ -386,7 +388,8 @@ class Window:
                 self.bsave_download.config(state=NORMAL)
         else:
             self.bsave_download.config(state=DISABLED)
-        self.after_id = self.root.after(100, self.scanDownload)
+        #  Create id for receiving kill signal.
+        self.scan_id = self.root.after(100, self.scanDownload)
 
     def saveDownload(self):
         '''   Start download in separate thread.   '''
@@ -396,16 +399,15 @@ class Window:
         self.thread = threading.Thread(target=self.downloop, args=(self.thread_queue, self.edownload_url.get(), self.edownload_dir.get()))
         self.thread.start()
         #  Signal scanDownload to exit.
-        self.root.after_cancel(self.after_id)
+        self.root.after_cancel(self.scan_id)
         #  Disable download button.
         self.bsave_download.config(state=DISABLED)
         #  Call listener method.
         self.listen_for_result(mode='download')
 
     def downloop(self, thread_queue, url, path):
-        #  Remove trailing '/', if any.
-        if '/' in (path[-1:]):
-            path = path[:-1]
+        '''   Download runs in own thread; output is appended to thread queue.   '''
+        path = os.path.abspath(path)
         #  Streamlink needs a filename; extract from URL.
         if 'twitch.tv' in url:
             filename = url.split('/')[-1]
@@ -426,9 +428,10 @@ class Window:
                 thread_queue.put(output)
 
     def cancelDownload(self):
-        #  Signal scanDownload to exit.
-        self.root.after_cancel(self.after_id)
-        #  Suppress stderr and stdout to console.
+        #  Signal scanDownload and listen_for_result to exit.
+        self.root.after_cancel(self.scan_id)
+        self.root.after_cancel(self.listen_id)
+        #  Forcibly kill download processes; suppress stderr and stdout to console.
         os.system('killall youtube-dl >/dev/null 2>&1')
         os.system('killall streamlink >/dev/null 2>&1')
         self.player()
