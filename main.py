@@ -10,6 +10,7 @@ class Window:
     def __init__(self):
         self.playlist = Playlist() 
         self.root = Tk()
+        self.root.title('Playlist Manager')
         #  Import widget style sheet.
         self.root.option_readfile('stylesheet.txt')
         #  Make window appear centered on screen.
@@ -17,8 +18,6 @@ class Window:
         x = (self.root.winfo_screenwidth() / 2) - (self.width /2)
         y = (self.root.winfo_screenheight() /2) - (self.height / 2)
         self.root.geometry('%dx%d+%d+%d' % (self.width, self.height, x, y))
-        ###
-        self.root.title('Playlist Manager')
         #  Create frames.
         self.frames = ('self.mainframe', 'self.topframe', 'self.newframe', 'self.delframe', 'self.downframe')
         for f in self.frames:
