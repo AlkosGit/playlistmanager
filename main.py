@@ -62,7 +62,7 @@ class Window:
         self.cboxplayer['values'] = self.playlist.loadPlaylist()
         self.cboxplayer.bind('<<ComboboxSelected>>', self.initPlayer)
         #  Set combobox to read-only.
-        self.cboxplayer.config(state='readonly', width=30)
+        self.cboxplayer.config(state='readonly', width=50)
         ###
         self.cbuttonresume_var = IntVar()
         self.cbuttonresume = Checkbutton(self.topframe, text='Resume playback',\
