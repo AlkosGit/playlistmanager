@@ -1,9 +1,0 @@
-# file: playlistmanager/stylesheet.txt
-*Menu*background : #444444
-*Menu*foreground : #FFFFFF
-*Frame*background : #444444
-*Frame*foreground : #FFFFFF
-*Button*relief : flat
-*Entry*relief : flat
-#  *Menu*activebackground : #555555 ---Setting seems to be ignored
-#  *Menu*activeforeground : #FFFFFF ---Setting seems to be ignored

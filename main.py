@@ -1,7 +1,8 @@
 # file: playlistmanager/main.py
 from playlist import Playlist
 from tkinter import *
-from tkinter import ttk, filedialog
+from tkinter import ttk
+from style import *
 import subprocess
 import threading, queue
 import os
@@ -11,8 +12,6 @@ class Window:
         self.playlist = Playlist() 
         self.root = Tk(className='playlistmanager')
         self.root.title('Playlist Manager')
-        #  Import widget style sheet.
-        self.root.option_readfile('stylesheet.txt')
         #  Make window appear centered on screen.
         self.width, self.height = 800, 500
         x = (self.root.winfo_screenwidth() / 2) - (self.width /2)
@@ -21,10 +20,10 @@ class Window:
         #  Create frames.
         self.frames = ('self.mainframe', 'self.topframe', 'self.newframe', 'self.delframe', 'self.downframe')
         for f in self.frames:
-            exec('{} = Frame(self.root)'.format(f))
+            exec('{} = MyFrame(self.root)'.format(f))
         #  Create filemenu.
-        self.menubar = Menu(self.root, activebackground='#555555', activeforeground='#FFFFFF')
-        self.filemenu = Menu(self.menubar, tearoff=0, activebackground='#555555', activeforeground='#FFFFFF')
+        self.menubar = MyMenu(self.root)
+        self.filemenu = MyMenu(self.menubar, tearoff=0, activebackground='#555555', activeforeground='#FFFFFF')
         self.filemenu.add_command(label='New playlist', command=self.new)
         self.filemenu.add_command(label='Download playlist', command=self.download)
         self.filemenu.add_separator()
@@ -32,11 +31,11 @@ class Window:
         self.menubar.add_cascade(label='File', menu=self.filemenu)
         self.root.config(menu=self.menubar, background='#444444')
 
-    def switchFrame(self):
+    def switchMyFrame(self):
         #  Destroy and recreate frames.
         for f in self.frames: 
             exec('{}.destroy()'.format(f))
-            exec('{} = Frame(self.root)'.format(f))
+            exec('{} = MyFrame(self.root)'.format(f))
         ###
         Grid.rowconfigure(self.mainframe, 1, weight=1)
         Grid.columnconfigure(self.mainframe, 0, weight=1)
@@ -50,13 +49,13 @@ class Window:
 
     def player(self):
         '''   This is the main window.  '''
-        self.switchFrame()
+        self.switchMyFrame()
         self.topframe.pack(fill=BOTH)
         self.mainframe.pack(fill=BOTH, expand=True, padx=10)
-        self.lplaylist = Label(self.topframe, text='Select a playlist:')
+        self.lplaylist = MyLabel(self.topframe, text='Select a playlist:')
         self.lplaylist.grid(column=0, row=0, padx=10)
         self.cboxplayer_var = StringVar()
-        self.cboxplayer = ttk.Combobox(self.topframe, textvariable=self.cboxplayer_var)
+        self.cboxplayer = MyCombobox(self.topframe, textvariable=self.cboxplayer_var)
         self.cboxplayer.grid(column=1, row=0, sticky='w', pady=10)
         #  Populate combobox.
         self.cboxplayer['values'] = self.playlist.loadPlaylist()
@@ -65,31 +64,24 @@ class Window:
         self.cboxplayer.config(state='readonly', width=50)
         ###
         self.cbuttonresume_var = IntVar()
-        self.cbuttonresume = Checkbutton(self.topframe, text='Resume playback',\
-                variable=self.cbuttonresume_var, activebackground='#444444',\
-                highlightbackground='#444444', foreground='#444444')
+        self.cbuttonresume = MyCheckbutton(self.topframe, text='Resume playback', variable=self.cbuttonresume_var)
         self.cbuttonshuffle_var = IntVar()
-        self.cbuttonshuffle = Checkbutton(self.topframe, text='Shuffle',\
-                variable=self.cbuttonshuffle_var, activebackground='#444444',\
-                highlightbackground='#444444', foreground='#444444')
+        self.cbuttonshuffle = MyCheckbutton(self.topframe, text='Shuffle', variable=self.cbuttonshuffle_var)
         #  Hide 'resume' and 'shuffle' checkbuttons until a playlist is selected.
         self.cbuttonresume.grid_forget()
         self.cbuttonshuffle.grid_forget()
         ###
-        scrollbar = Scrollbar(self.mainframe)
+        scrollbar = MyScrollbar(self.mainframe)
         scrollbar.grid(column=1, row=1, sticky='ns')
-        self.tmain = Text(self.mainframe, width=70, height=15, relief='flat', yscrollcommand=scrollbar.set)
+        self.tmain = MyText(self.mainframe, width=70, height=15, yscrollcommand=scrollbar.set)
         self.tmain.delete(1.0, END)
         self.tmain.grid(column=0, row=1, sticky='nsew')
         scrollbar.config(command=self.tmain.yview)
-        self.bdelete = Button(self.mainframe, text='Delete', command=self.delete,\
-                activebackground='#333333', activeforeground='white')
+        self.bdelete = MyButton(self.mainframe, text='Delete', command=self.delete)
         self.bdelete.grid(column=0, row=2, sticky='w', pady=5)
-        self.bedit = Button(self.mainframe, text='Edit', command=lambda: self.new(mode='edit'),\
-                activebackground='#333333', activeforeground='white')
+        self.bedit = MyButton(self.mainframe, text='Edit', command=lambda: self.new(mode='edit'))
         self.bedit.grid(column=0, row=2, sticky='w', padx=70)
-        self.bplay = Button(self.mainframe, text='Play', command=self.play,\
-                activebackground='#333333', activeforeground='white')
+        self.bplay = MyButton(self.mainframe, text='Play', command=self.play)
         self.bplay.grid(column=0, row=2, sticky='e', pady=5)
         #  Disable text widget, checkbuttons and buttons until a playlist is selected.
         self.widget = (self.cbuttonresume, self.cbuttonshuffle, self.tmain, self.bdelete, self.bplay, self.bedit)
@@ -227,43 +219,39 @@ class Window:
     def new(self, mode=None):
         '''   Create new playlist. 
         If mode = "edit" same window is used to edit existing playlist.   '''
-        self.switchFrame()
+        self.switchMyFrame()
         self.newframe.pack(fill=BOTH, expand=True, pady=10)
         for i in range(7):
             Grid.rowconfigure(self.newframe, i, pad=5)
-        self.lname = Label(self.newframe, text='Name')
+        self.lname = MyLabel(self.newframe, text='Name')
         self.lname.grid(column=0, row=1, padx=5, sticky='w')
-        self.ename = Entry(self.newframe, highlightcolor='white', insertbackground='white')
+        self.ename = MyEntry(self.newframe)
         self.ename.grid(column=1, row=1, padx=7, sticky='ew')
-        self.lurl = Label(self.newframe, text='URL or directory')
+        self.lurl = MyLabel(self.newframe, text='URL or directory')
         self.lurl.grid(column=0, row=2, padx=5, sticky='w')
-        self.eurl = Entry(self.newframe, highlightcolor='white', insertbackground='white')
+        self.eurl = MyEntry(self.newframe)
         self.eurl.grid(column=1, row=2, padx=7, sticky='ew')
-        self.lres = Label(self.newframe, text='Resume playback')
+        self.lres = MyLabel(self.newframe, text='Resume playback')
         self.lres.grid(column=0, row=3, padx=5, sticky='w')
         self.cbuttonresume_var = IntVar()
-        self.cbuttonresume = Checkbutton(self.newframe, variable=self.cbuttonresume_var,\
-                highlightcolor='white', activebackground='#444444',\
-                highlightbackground='#444444', foreground='#444444')
+        self.cbuttonresume = MyCheckbutton(self.newframe, variable=self.cbuttonresume_var)
         self.cbuttonresume.grid(column=1, row=3, sticky='nw')
         #  Messagelabel for resume not supported by Twitch. Hidden by default.
-        self.lres_msg = Label(self.newframe, text='Resume not supported by Twitch streams!')
+        self.lres_msg = MyLabel(self.newframe, text='Resume not supported by Twitch streams!')
         self.lres_msg.grid_forget()
         ###
-        self.lshuf = Label(self.newframe, text='Shuffle')
+        self.lshuf = MyLabel(self.newframe, text='Shuffle')
         self.lshuf.grid(column=0, row=4, padx=5, sticky='w')
         self.cbuttonshuffle_var = IntVar()
-        self.cbuttonshuffle = Checkbutton(self.newframe, variable=self.cbuttonshuffle_var,\
-                highlightcolor='white', activebackground='#444444',\
-                highlightbackground='#444444', foreground='#444444')
+        self.cbuttonshuffle = MyCheckbutton(self.newframe, variable=self.cbuttonshuffle_var)
         self.cbuttonshuffle.grid(column=1, row=4, sticky='w')
-        self.lshuf_msg = Label(self.newframe, text='Shuffle not supported by Twitch streams!')
+        self.lshuf_msg = MyLabel(self.newframe, text='Shuffle not supported by Twitch streams!')
         self.lshuf_msg.grid_forget()
-        self.ldesc = Label(self.newframe, text='Description')
+        self.ldesc = MyLabel(self.newframe, text='Description')
         self.ldesc.grid(column=0, row=5, padx=5, pady=3, sticky='nw')
-        self.tdesc = Text(self.newframe, width=55, height=10, relief='flat', highlightcolor='white', insertbackground='white')
+        self.tdesc = MyText(self.newframe, width=55, height=10)
         self.tdesc.grid(column=1, row=5, padx=7, sticky='nsew')
-        self.bcancel = Button(self.newframe, text='Cancel', command=self.player, activebackground='#333333', activeforeground='white')
+        self.bcancel = MyButton(self.newframe, text='Cancel', command=self.player)
         self.bcancel.grid(column=1, row=6, padx=7, pady=5, sticky='w')
         if mode == 'edit':
             values = self.playlist.insertPlaylist(self.value)
@@ -273,9 +261,9 @@ class Window:
                 self.cbuttonresume_var.set(resume)
                 self.cbuttonshuffle_var.set(shuffle)
                 self.tdesc.insert(1.0, description)
-                self.bsave = Button(self.newframe, text='Save', command=self.update, activebackground='#333333', activeforeground='white')
+                self.bsave = MyButton(self.newframe, text='Save', command=self.update)
         else:
-            self.bsave = Button(self.newframe, text='Save', command=self.save, activebackground='#333333', activeforeground='white')
+            self.bsave = MyButton(self.newframe, text='Save', command=self.save)
         self.bsave.grid(column=1, row=6, padx=7, pady=5, sticky='e')
         self.bsave.config(state=DISABLED)
         self.scaninput()
@@ -347,31 +335,28 @@ class Window:
         self.player()
 
     def download(self):
-        self.switchFrame()
+        self.switchMyFrame()
         self.downframe.pack(fill=BOTH, expand=True, padx=10, pady=5)
         for i in range(4):
             Grid.rowconfigure(self.downframe, i, pad=5)
-        self.ldownload_url = Label(self.downframe, text='URL')
+        self.ldownload_url = MyLabel(self.downframe, text='URL')
         self.ldownload_url.grid(column=0, row=0, sticky='w')
-        self.edownload_url = Entry(self.downframe, highlightcolor='white', insertbackground='white')
+        self.edownload_url = MyEntry(self.downframe)
         self.edownload_url.grid(column=1, row=0, columnspan=2, sticky='ew')
-        self.ldownload_dir = Label(self.downframe, text='Destination')
+        self.ldownload_dir = MyLabel(self.downframe, text='Destination')
         self.ldownload_dir.grid(column=0, row=1, sticky='w')
-        self.edownload_dir = Entry(self.downframe, highlightcolor='white', insertbackground='white')
+        self.edownload_dir = MyEntry(self.downframe)
         self.edownload_dir.grid(column=1, row=1, columnspan=2, sticky='ew')
-        scrollbar = Scrollbar(self.downframe)
+        scrollbar = MyScrollbar(self.downframe)
         scrollbar.grid(column=3, row=2, pady=5, sticky='ns')
-        self.tdownload = Text(self.downframe, width=55, height=10, relief='flat', highlightcolor='white',\
-                insertbackground='white', yscrollcommand=scrollbar.set)
+        self.tdownload = MyText(self.downframe, width=55, height=10, yscrollcommand=scrollbar.set)
         self.tdownload.grid(column=0, row=2, columnspan=3, pady=5, sticky='nsew')
         scrollbar.config(command=self.tdownload.yview)
-        self.bcancel_download = Button(self.downframe, text='Cancel', command=self.cancelDownload,\
-                activebackground='#333333', activeforeground='white')
+        self.bcancel_download = MyButton(self.downframe, text='Cancel', command=self.cancelDownload)
         self.bcancel_download.grid(column=0, row=3, sticky='w')
-        self.lstatus = Label(self.downframe)
+        self.lstatus = MyLabel(self.downframe)
         self.lstatus.grid(column=1, row=3)
-        self.bsave_download = Button(self.downframe, text='Download', command=self.saveDownload,\
-                activebackground='#333333', activeforeground='white')
+        self.bsave_download = MyButton(self.downframe, text='Download', command=self.saveDownload)
         self.bsave_download.grid(column=2, row=3, sticky='e')
         self.tdownload.config(state=DISABLED)
         self.lstatus.grid_forget()
