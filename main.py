@@ -360,7 +360,7 @@ class Window:
         self.edownload_dir = Entry(self.downframe, highlightcolor='white', insertbackground='white')
         self.edownload_dir.grid(column=1, row=1, columnspan=2, sticky='ew')
         scrollbar = Scrollbar(self.downframe)
-        scrollbar.grid(column=2, row=2, pady=5, sticky='ns')
+        scrollbar.grid(column=3, row=2, pady=5, sticky='ns')
         self.tdownload = Text(self.downframe, width=55, height=10, relief='flat', highlightcolor='white',\
                 insertbackground='white', yscrollcommand=scrollbar.set)
         self.tdownload.grid(column=0, row=2, columnspan=3, pady=5, sticky='nsew')
