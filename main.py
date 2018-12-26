@@ -429,8 +429,13 @@ class Window:
 
     def cancelDownload(self):
         #  Signal scanDownload and listen_for_result to exit.
+        #  self.listen_id is only valid when a download has been started.
         self.root.after_cancel(self.scan_id)
-        self.root.after_cancel(self.listen_id)
+        try:
+            self.root.after_cancel(self.listen_id)
+        #  User pressed cancel without starting a download.
+        except AttributeError:
+            pass
         #  Forcibly kill download processes; suppress stderr and stdout to console.
         os.system('killall youtube-dl >/dev/null 2>&1')
         os.system('killall streamlink >/dev/null 2>&1')
