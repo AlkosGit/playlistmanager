@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter.scrolledtext import *
 
 class MyFrame(Frame):
     def __init__(self, parent, **config):
@@ -12,7 +13,8 @@ class MyMenu(Menu):
         self.config(background='#444444', 
             foreground='white', 
             activebackground='#555555', 
-            activeforeground='#FFFFFF')
+            activeforeground='#FFFFFF', 
+            tearoff=0)
 
 class MyLabel(Label):
     def __init__(self, parent, **config):
@@ -42,6 +44,15 @@ class MyCheckbutton(Checkbutton):
 class MyText(Text):
     def __init__(self, parent, **config):
         Text.__init__(self, parent, **config)
+        self.config(background='#444444',
+            foreground='white', 
+            highlightcolor='white', 
+            insertbackground='white',
+            relief='flat')
+
+class MyScrolledText(ScrolledText):
+    def __init__(self, parent, **config):
+        ScrolledText.__init__(self, parent, **config)
         self.config(background='#444444',
             foreground='white', 
             highlightcolor='white', 

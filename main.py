@@ -23,13 +23,20 @@ class Window:
             exec('{} = MyFrame(self.root)'.format(f))
         #  Create filemenu.
         self.menubar = MyMenu(self.root)
-        self.filemenu = MyMenu(self.menubar, tearoff=0, activebackground='#555555', activeforeground='#FFFFFF')
+        self.filemenu = MyMenu(self.menubar)
         self.filemenu.add_command(label='New playlist', command=self.new)
         self.filemenu.add_command(label='Download playlist', command=self.download)
         self.filemenu.add_separator()
         self.filemenu.add_command(label='Exit', command=self.root.destroy)
+        self.aboutmenu = MyMenu(self.menubar) 
+        self.aboutmenu.add_command(label='Help', command=self.showhelp)
         self.menubar.add_cascade(label='File', menu=self.filemenu)
+        self.menubar.add_cascade(label='About', menu=self.aboutmenu)
         self.root.config(menu=self.menubar, background='#444444')
+
+    def showhelp(self):
+        import helpdoc
+        helpdoc.Help()
 
     def switchMyFrame(self):
         #  Destroy and recreate frames.
@@ -425,6 +432,7 @@ class Window:
         os.system('killall youtube-dl >/dev/null 2>&1')
         os.system('killall streamlink >/dev/null 2>&1')
         self.player()
+
 
 if __name__ == '__main__':
     win = Window()
