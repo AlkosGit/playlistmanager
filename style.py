@@ -28,7 +28,8 @@ class MyEntry(Entry):
         self.config(background='#444444', 
             foreground='white', 
             highlightcolor='white', 
-            insertbackground='white',
+            insertbackground='white', 
+            disabledbackground='#444444',
             relief='flat')
 
 class MyCheckbutton(Checkbutton):
