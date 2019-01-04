@@ -5,6 +5,7 @@ from style import *
 class Window:
     def __init__(self):
         self.root = Tk(className='playlistmanager')
+        self.root.protocol('WM_DELETE_WINDOW', self.root.quit())
         self.root.title('Playlist Manager')
         #  Make window appear centered on screen.
         self.width, self.height = 800, 500
@@ -25,6 +26,7 @@ class Window:
         self.root.config(menu=self.menubar, background='#444444')
         #  Create mainframe.
         self.mainframe = MyFrame(self.root)
+        #  Player is main window.
         self.player()
 
     def showhelp(self):
@@ -71,8 +73,9 @@ class Window:
         self.player()
 
 if __name__ == '__main__':
-    win = Window()
+    Window()
+    # mainloop()
     #  Wrap in try statement to suppress errormessages on application quit.
-    try:
-        mainloop()
-    except AttributeError: pass
+    # try:
+    #     mainloop()
+    # except AttributeError: pass

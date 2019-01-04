@@ -42,7 +42,7 @@ from the URL.
 
 class Help:
     def __init__(self):
-        self.top = Tk()
+        self.top = Toplevel()
         self.top.title('Help')
         self.top.config(background='#444444')
         self.width, self.height = 450, 200

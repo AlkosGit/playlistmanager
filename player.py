@@ -3,8 +3,7 @@ from playlist import Playlist
 from tkinter import *
 from tkinter import ttk
 from style import *
-import subprocess
-import threading, queue
+import queue
 
 class Player(MyFrame):
     def __init__(self, parent, **config):
@@ -84,63 +83,19 @@ class Player(MyFrame):
             self.cbuttonshuffle.config(state=DISABLED)
 
     def play(self):
-        '''   Start player in separate thread.   '''
-        value = (self.cboxplayer_var.get())
-        #  Retrieve url or mediafile from selected playlist.
-        self.url = self.playlist.selectPlaylist(value)
-        #  Create thread queue to monitor output from thread.
-        self.thread_queue = queue.Queue()
-        #  Create thread and pass thread queue
-        self.thread = threading.Thread(target=self.runloop, args=(self.thread_queue, self.resume, self.shuffle))
-        self.thread.start()
+        from play import Play
+        self.player = Play(self.value, self.resume, self.shuffle)
         #  Disable buttons while playing.
         for button in self.bdelete, self.bplay, self.bedit:
             button.config(state=DISABLED)
         #  Call listener method.
         self.listen_for_result()
 
-    def runloop(self, thread_queue, resume, shuffle):
-        '''   Player runs in own thread. 
-        Store output from player in thread queue.   '''
-        #  Determine which player command to use; Twitch videos need 'streamlink' to play in mpv.
-        #  Resume and shuffle not supported by Twitch streams.
-        if 'twitch.tv' in self.url:
-            playercmd, streamparm, streamopts = '/usr/bin/streamlink', '-p mpv', 'best'
-            #  Enable fast-forward, seek etc.
-            streamseek = '--player-passthrough=hls'
-        else:
-            playercmd = '/usr/bin/mpv'
-            resumeopt = '--save-position-on-quit'
-            shuffleopt = '--shuffle'
-        #  Check for selected options.
-        if resume and shuffle:
-            self.process = subprocess.Popen([playercmd, resumeopt, shuffleopt, self.url], stdout=subprocess.PIPE)
-        else:
-            if resume:
-                self.process = subprocess.Popen([playercmd, resumeopt, self.url], stdout=subprocess.PIPE)
-            else:
-                if shuffle:
-                    self.process = subprocess.Popen([playercmd, shuffleopt, '--loop', self.url], stdout=subprocess.PIPE)
-                else:
-                    if 'twitch.tv' in self.url:
-                        self.process = subprocess.Popen([playercmd, streamparm, streamseek, self.url, streamopts], stdout=subprocess.PIPE)
-                    else:
-                        self.process = subprocess.Popen([playercmd, self.url], stdout=subprocess.PIPE)
-
-        #  Output is a continuous stream, so we need to loop.
-        while True:
-            output = self.process.stdout.readline()
-            if not output:
-                break
-            else:
-                #  Store output in thread queue
-                thread_queue.put(output)
-
     def listen_for_result(self):
         '''   Keep listening for updated output from player.   '''
         #  Monitor thread output; quit if thread has exited.
-        self.thread.result_queue = self.thread_queue
-        if 'stopped' in str(self.thread):
+        self.player.thread.result_queue = self.player.thread_queue
+        if 'stopped' in str(self.player.thread):
             for button in self.bdelete, self.bplay, self.bedit:
                 button.config(state=NORMAL)
             return
@@ -151,7 +106,7 @@ class Player(MyFrame):
             #  Capturing an output stream, so we need to loop.
             while True:
                 #  Retrieve the output from thread queue and insert into text widget.
-                self.res = self.thread_queue.get(0)
+                self.res = self.player.thread_queue.get(0)
                 self.tmain.insert(END, self.res)
                 self.tmain.see(END)
         except queue.Empty:
