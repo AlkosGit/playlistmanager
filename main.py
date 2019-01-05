@@ -31,8 +31,9 @@ class Window:
         self.player()
 
     def showhelp(self):
-        import helpdoc
-        helpdoc.Help()
+        from helpdoc import Help
+        Help()
+
 
     def switchFrame(self):
         #  Destroy and recreate mainframe.

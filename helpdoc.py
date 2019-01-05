@@ -37,15 +37,18 @@ to shuffle the playlist.
 Click 'file -> download playlist' to download a playlist, 
 Youtube or Twitch video.
 Videos will be saved with a default filename inferred
-from the URL. 
+from the URL.
+
+To play a video or stream without saving to a playlist,
+click 'file -> quickplay'.
 """
 
 class Help:
     def __init__(self):
-        self.top = Toplevel()
+        self.top = Toplevel(class_='playlistmanager')
         self.top.title('Help')
         self.top.config(background='#444444')
-        self.width, self.height = 450, 200
+        self.width, self.height = 550, 200
         x = (self.top.winfo_screenwidth() / 2) - (self.width /2)
         y = (self.top.winfo_screenheight() /2) - (self.height / 2)
         self.top.geometry('%dx%d+%d+%d' % (self.width, self.height, x, y))
@@ -58,6 +61,10 @@ class Help:
         self.thelp.vbar.config(background='#444444', activebackground='#333333')
         self.thelp.pack(fill=BOTH, expand=True)
         self.thelp.insert(END, helptext)
+        #  Make window modal.
+        self.top.grab_set()
+        self.top.focus_set()
+        self.top.wait_window()
         self.top.mainloop()
 
 if __name__ == '__main__':
