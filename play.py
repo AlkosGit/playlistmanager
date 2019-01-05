@@ -4,20 +4,23 @@ import subprocess
 import threading, queue
 
 class Play:
-    def __init__(self, value, resume, shuffle):
+    def __init__(self, value, resume=None, shuffle=None, mode=None):
         '''   Start player in separate thread.   '''
         self.value = value
         self.resume = resume
         self.shuffle = shuffle
+        self.mode = mode
         self.playlist = Playlist()
         #  Retrieve url or mediafile from selected playlist.
-        self.url = self.playlist.selectPlaylist(self.value)
+        if self.mode == 'quickplay':
+            self.url = self.value
+        else:
+            self.url = self.playlist.selectPlaylist(self.value)
         #  Create thread queue to monitor output from thread.
         self.thread_queue = queue.Queue()
         #  Create thread and pass thread queue
         self.thread = threading.Thread(target=self.runloop, args=(self.thread_queue, self.resume, self.shuffle))
         self.thread.start()
-        #  Call listener method.
 
     def runloop(self, thread_queue, resume, shuffle):
         '''   Player runs in own thread. 

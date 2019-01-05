@@ -17,6 +17,7 @@ class Window:
         self.filemenu = MyMenu(self.menubar)
         self.filemenu.add_command(label='New playlist', command=self.new)
         self.filemenu.add_command(label='Download playlist', command=self.download)
+        self.filemenu.add_command(label='Quickplay', command=self.quickplay)
         self.filemenu.add_separator()
         self.filemenu.add_command(label='Exit', command=self.root.destroy)
         self.aboutmenu = MyMenu(self.menubar) 
@@ -70,6 +71,14 @@ class Window:
         d = Download(self.mainframe)
         d.pack(fill=BOTH, expand=True, padx=10, pady=5)
         self.root.wait_window(d)
+        self.player()
+
+    def quickplay(self):
+        self.switchFrame()
+        from quickplay import QuickPlay
+        q = QuickPlay(self.mainframe)
+        q.pack(fill=BOTH, expand=True, padx=10, pady=5)
+        self.root.wait_window(q)
         self.player()
 
 if __name__ == '__main__':
